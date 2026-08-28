@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=schema.json
+
+controllers:
+  - id: TEST-AXIS
+    type: fastcs_ximc.XimcController
+
+    ### Connection
+    # Full uri
+    uri: xi-emu:///tmp/fastcs-ximc/sim/axis.bin # (simulated)
+
+    # OR Serial device path, shorthand for xi-com://<port>:
+    # port: /dev/ttyACM0
+
+    # OR Name of an environment variable holding the serial device path
+    # port_env: TEST_AXIS_PORT
+
+transport:
+  - epicsca: {}
+    gui:
+      title: "ximc"
+      output_dir: ./opi/

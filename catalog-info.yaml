@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: fastcs-ximc
+  title: fastcs-ximc
+  description: FastCS support for XIMC motion controllers
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/beamline-controls
