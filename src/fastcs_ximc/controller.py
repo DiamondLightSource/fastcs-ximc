@@ -4,9 +4,16 @@ from __future__ import annotations
 
 import enum
 import logging
+import warnings
 from typing import Any
 
-import libximc.highlevel as ximc
+# Catch DeprecationWarning for any Structure that sets _pack_ without setting _layout_
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore", message="Due to '_pack_'", category=DeprecationWarning
+    )
+    import libximc.highlevel as ximc
+
 from fastcs import ONCE
 from fastcs.attributes import AttrR, AttrRW, AttrW
 from fastcs.controllers import Controller
