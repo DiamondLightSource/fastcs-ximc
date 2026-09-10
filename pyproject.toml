@@ -14,7 +14,7 @@ classifiers = [
 ]
 description = "FastCS support for XIMC motion controllers"
 dependencies = [
-    "fastcs==0.14.1",
+    "fastcs>=0.14.2",
     "libximc==3.0.2",
     "p4p>=4.2.1",
     "pvi>=0.13.1",
@@ -49,6 +49,12 @@ GitHub = "https://github.com/DiamondLightSource/fastcs-ximc"
 [[project.authors]] # Further authors may be added by duplicating this section
 email = "thomas.kane@diamond.ac.uk"
 name = "Thomas Kane"
+
+# Temporary: track the fastcs allow-colons-in-pv branch until it is released.
+# uv-only metadata - it is not carried in the built wheel, so a published
+# fastcs-ximc still resolves fastcs from PyPI. Remove this and re-pin when merged.
+[tool.uv.sources]
+fastcs = { git = "https://github.com/DiamondLightSource/fastcs.git", branch = "allow-colons-in-pv" }
 
 [tool.setuptools_scm]
 version_file = "src/fastcs_ximc/_version.py"

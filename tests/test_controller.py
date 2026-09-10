@@ -348,12 +348,11 @@ class TestMotionInhibit:
         assert await controller.device.read_field("position", "Position") == 0
 
     async def test_demands_are_rejected_while_inhibited(self, controller):
-        """A failed put is logged rather than raised, so check the hardware."""
         await controller.motion_inhibit.put(True)
 
-        await controller.position_demand.put(1000)
+        with pytest.raises(MotionInhibitedError):
+            await controller.position_demand.put(1000)
 
-        await asyncio.sleep(0.1)
         assert await controller.device.read_field("position", "Position") == 0
 
     async def test_stop_still_works_while_inhibited(self, controller):
