@@ -558,7 +558,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastcs", git = "https://github.com/DiamondLightSource/fastcs.git?branch=allow-colons-in-pv" },
-    { name = "libximc", specifier = "==3.0.2" },
+    { name = "libximc", specifier = "==3.0.4" },
     { name = "p4p", specifier = ">=4.2.1" },
     { name = "pvi", specifier = ">=0.13.1" },
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
@@ -755,11 +755,11 @@ wheels = [
 
 [[package]]
 name = "libximc"
-version = "3.0.2"
+version = "3.0.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a9/70/f215554b0903657d40b08cc0a591a87c35a884bd14e0778117ec5a159abc/libximc-3.0.2.tar.gz", hash = "sha256:52c7e7c26c94fe245a2f083188663e1560dd80e8b31a61f5096f77b8efa30631", size = 5475950, upload-time = "2026-01-27T07:19:42.486Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f4/53/417320404009eb5ec19bbc0cd8bdb1f22301d9e858508318fc3304ae3003/libximc-3.0.4.tar.gz", hash = "sha256:4e41b91350a3a1e340ac4d0085dd1fad1953cc9327f656f755b1b311f21d4bd8", size = 5477539, upload-time = "2026-06-23T07:34:48.356Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/a2/3d11d8bd77a62baca95743726581a6c9459c3cc5a3a109324416f5406048/libximc-3.0.2-py3-none-any.whl", hash = "sha256:a92b2e52dff361ff92cc304957bb3231c877849038e99509d3affa779a8732fd", size = 5534104, upload-time = "2026-01-27T07:19:39.898Z" },
+    { url = "https://files.pythonhosted.org/packages/22/8c/19c67dcdfa07be0aa7f7ca2f749faddad44aff3562df5162a4b2b2e7c9a3/libximc-3.0.4-py3-none-any.whl", hash = "sha256:56a3a2783dc3660386e675b75d3be93ae2a36895d853d71e99c17ae4184b8b41", size = 5534924, upload-time = "2026-06-23T07:34:44.855Z" },
 ]
 
 [[package]]
