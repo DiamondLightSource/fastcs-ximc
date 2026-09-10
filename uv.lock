@@ -514,8 +514,8 @@ wheels = [
 
 [[package]]
 name = "fastcs"
-version = "0.14.1"
-source = { registry = "https://pypi.org/simple" }
+version = "0.14.3.dev2+g78fa05d77"
+source = { git = "https://github.com/DiamondLightSource/fastcs.git?branch=allow-colons-in-pv#78fa05d777baeb66748e515842711004c22533f0" }
 dependencies = [
     { name = "aioserial" },
     { name = "fastapi", extra = ["standard"] },
@@ -527,10 +527,6 @@ dependencies = [
     { name = "pygelf" },
     { name = "ruamel-yaml" },
     { name = "stdio-socket" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fe/89/801be8d791c07b3a1b260a07d282e6c9ffde5c0a26846065611a655d307e/fastcs-0.14.1.tar.gz", hash = "sha256:3d1c9d3ff300db53c7f421346a6614d50668d02604958275df403e0261404506", size = 417221, upload-time = "2026-06-17T10:14:07.71Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/5a/a6f230e82a7f4f4f537aa39af5751dc33151334771c032ea336a02189e91/fastcs-0.14.1-py3-none-any.whl", hash = "sha256:542817b966410ca3e320c1477ea52f0bf16451fe15a1f3bb90d9c7b654bb7922", size = 94593, upload-time = "2026-06-17T10:14:06.327Z" },
 ]
 
 [[package]]
@@ -561,7 +557,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastcs", specifier = "==0.14.1" },
+    { name = "fastcs", git = "https://github.com/DiamondLightSource/fastcs.git?branch=allow-colons-in-pv" },
     { name = "libximc", specifier = "==3.0.2" },
     { name = "p4p", specifier = ">=4.2.1" },
     { name = "pvi", specifier = ">=0.13.1" },
