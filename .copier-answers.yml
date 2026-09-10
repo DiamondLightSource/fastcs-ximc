@@ -13,7 +13,7 @@ docs_type: README
 git_platform: github.com
 github_org: DiamondLightSource
 package_name: fastcs_ximc
-pypi: true
+pypi: false
 repo_name: fastcs-ximc
 strict_typing: false
 type_checker: pyright

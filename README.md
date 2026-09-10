@@ -1,6 +1,5 @@
 [![CI](https://github.com/DiamondLightSource/fastcs-ximc/actions/workflows/ci.yml/badge.svg)](https://github.com/DiamondLightSource/fastcs-ximc/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/DiamondLightSource/fastcs-ximc/branch/main/graph/badge.svg)](https://codecov.io/gh/DiamondLightSource/fastcs-ximc)
-[![PyPI](https://img.shields.io/pypi/v/fastcs-ximc.svg)](https://pypi.org/project/fastcs-ximc)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 # fastcs_ximc
@@ -16,7 +15,6 @@ libximc's virtual device (`xi-emu://`) are driven identically.
 What            | Where
 :---:           | :---:
 Source          | <https://github.com/DiamondLightSource/fastcs-ximc>
-PyPI            | `pip install fastcs-ximc`
 Docker          | `docker run ghcr.io/diamondlightsource/fastcs-ximc:latest`
 Releases        | <https://github.com/DiamondLightSource/fastcs-ximc/releases>
 
