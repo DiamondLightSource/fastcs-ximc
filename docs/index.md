@@ -6,16 +6,39 @@ instance drives one device.
 
 ## Configuration
 
-Each entry under `controllers:` in `fastcs.yaml` configures one device.
+Each entry under `controllers:` in `fastcs.yaml` configures one device. The
+device is addressed by a `XimcConnection` declared in that entry's
+`connections:` block, under the role name `ximc`:
+
+```yaml
+controllers:
+  - id: AXIS1
+    type: fastcs_ximc.XimcController
+    poll_period: 0.2
+    connections:
+      ximc:
+        type: fastcs_ximc.XimcConnection
+        settings:
+          uri: xi-com:///dev/ttyACM0
+```
+
+Connection `settings:`
 
 | Field | Default | Description |
 |---|---|---|
 | `uri` | - | Full libximc URI, e.g. `xi-com:///dev/ttyACM0` |
 | `port` | - | Serial device path; shorthand for `xi-com://<port>` |
 | `port_env` | - | Environment variable holding the serial device path |
-| `poll_period` | `0.2` | Seconds between reads of the device |
 
-Exactly one of `uri`, `port` or `port_env` must be given.
+Exactly one of `uri`, `port` or `port_env` must be given. `reconnect_period`
+and `reconnect_attempts` are FastCS `Connection` arguments and may be given
+alongside `settings:`.
+
+Controller options
+
+| Field | Default | Description |
+|---|---|---|
+| `poll_period` | `0.2` | Seconds between reads of the device |
 
 ### URI schemes
 
@@ -95,8 +118,10 @@ stopped (`JOGF`/`JOGR`) and tweak is the single relative nudge (`TWF`/`TWR` of
 
 `motion_inhibit` is a software interlock. While it is set, every move - the
 demands, the tweak and jog commands, `move_to_mark`, `loft` and both homing
-commands - raises `MotionInhibitedError`. `stop`, `soft_stop` and `zero` are
-deliberately still allowed.
+commands - raises `MotionInhibitedError` and does not reach the device. FastCS
+logs a setter that raises rather than propagating it, so a write to
+`position_demand`, `relative_move` or `user_demand` is rejected silently from
+the client's point of view; the commands raise to their caller.
 
 ### Limits
 
@@ -233,16 +258,26 @@ So an axis is a controller entry, and a multi-axis system is several of them:
 
 ```yaml
 controllers:
-  - id: STAGE:X
+  - id: STAGE-X
     type: fastcs_ximc.XimcController
-    uri: xi-com:///dev/ttyACM0
-  - id: STAGE:Y
+    connections:
+      ximc:
+        type: fastcs_ximc.XimcConnection
+        settings:
+          uri: xi-com:///dev/ttyACM0
+  - id: STAGE-Y
     type: fastcs_ximc.XimcController
-    uri: xi-com:///dev/ttyACM1
+    connections:
+      ximc:
+        type: fastcs_ximc.XimcConnection
+        settings:
+          uri: xi-com:///dev/ttyACM1
 ```
 
-Each entry gets its own device handle, its own lock and its own PV prefix. Since
-libximc offers no shared handle, there is nothing for the axes to contend over.
+Connection role names are local to an entry, so both axes claim `ximc` and get
+their own connection. Each entry gets its own device handle, its own lock, its
+own reconnect budget and its own PV prefix. Since libximc offers no shared
+handle, there is nothing for the axes to contend over.
 
 The `Device` attributes above make each axis identifiable from the control
 system, so a mis-ordered port shows up as the wrong serial number or stage name
@@ -268,24 +303,36 @@ against a PV prefix rather than as silently swapped axes.
 
 ## Implementation notes
 
-**Attributes map onto libximc structs declaratively.** A `XimcSettingsIORef`
-names a `(group, field)` pair: `("move", "Speed")` reads
-`get_move_settings().Speed` and writes it back through `set_move_settings`.
-The groups `position`, `status` and `device_information` are read-only and use
-`get_<group>()` instead. Writes are read-modify-write because libximc rejects a
-partially populated struct. A ref with a `bit` mask reads and writes that one
-flag of a bitmask field, leaving the other flags in the field untouched.
+**Attributes carry their own IO.** Each attribute backed by the device gets a
+getter, and a setter if it is writable, built by `XimcController._reader` and
+`._writer` from a `(group, field)` pair: `("move", "Speed")` reads
+`get_move_settings().Speed` and writes it back through `set_move_settings`. The
+groups in `READ_ONLY_GROUPS` use `get_<group>()` instead. Writes are
+read-modify-write because libximc rejects a partially populated struct.
+`._flag_reader`/`._flag_writer` read and write one flag of a bitmask field,
+leaving the other flags in the field untouched. A getter wrapped in `Polled` is
+read at `poll_period`; a bare getter - the `Device` group - is read once, when
+the connection opens.
 
-**Soft attributes are attributes without an `io_ref`.** FastCS gives a soft
-`AttrRW` an internal put callback, so a write updates its own value and stops
-there - which is exactly the marked position, the unit transform, the tweak step
-and the inhibit. Derived values (`user_position`, `following_error`) are `AttrR`
-recomputed from an `add_on_update_callback` on each of their inputs, so they
-follow the poll loop without adding device traffic.
+**Soft attributes are attributes without a getter or setter.** A soft `AttrRW`
+pushes a write straight to its own readback - which is exactly the marked
+position, the unit transform, the tweak step and the inhibit. Derived values
+(`user_position`, `following_error`) are `AttrR` recomputed from an
+`add_readback_callback` on each of their inputs, so they follow the poll loop
+without adding device traffic.
 
-**Blocking calls run off the event loop.** Every libximc call is a blocking
-ctypes call over a serial link, so `XimcDevice` dispatches them to a worker
-thread behind a lock — the device handle is not safe for concurrent use.
+**The connection owns the device handle.** `XimcConnection` is a FastCS
+`Connection`, so opening it, reopening it after a failure and closing it at
+shutdown are the `ControllerRunner`'s job, not the controller's. Every libximc
+call is a blocking ctypes call over a serial link, so the connection dispatches
+them to a worker thread behind a lock — the device handle is not safe for
+concurrent use.
+
+**Only a dead link marks the connection down.** libximc raises `ConnectionError`
+when the device must be reopened and `ValueError` when it rejects a parameter,
+so `XimcConnection.call` calls `set_disconnected()` for the first and lets the
+second through untouched. Scans on the controller are gated while the connection
+is down, and the runner's reconnect task reopens it.
 
 **Strict flag enums are patched at open.** libximc models bitmask fields as
 `enum.Flag` with `STRICT` boundary, so a single undocumented bit from real
@@ -314,7 +361,8 @@ tox -p              # pre-commit, pyright and tests
 pytest              # tests only - they run against a xi-emu:// virtual device
 ```
 
-If the controller options change, regenerate the config schema:
+If the controller options or the connection settings change, regenerate the
+config schema:
 
 ```
 python -m fastcs_ximc schema > schema.json

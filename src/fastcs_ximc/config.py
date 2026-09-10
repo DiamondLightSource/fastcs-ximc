@@ -9,8 +9,8 @@ XIMC_URI_SCHEMES = ("xi-com://", "xi-net://", "xi-udp://", "xi-emu://")
 """Device URI schemes understood by libximc."""
 
 
-class XimcOptions(BaseModel):
-    """Options for a single libximc device.
+class XimcConnectionSettings(BaseModel):
+    """Where to find a single libximc device.
 
     A device is addressed by a full libximc URI. ``port``/``port_env`` are
     convenience shorthands that expand to a ``xi-com://`` URI for the common
@@ -23,11 +23,9 @@ class XimcOptions(BaseModel):
     """Serial device path, shorthand for ``xi-com://<port>``."""
     port_env: str | None = None
     """Name of an environment variable holding the serial device path."""
-    poll_period: float = 0.2
-    """Period in seconds between reads of the device."""
 
     @model_validator(mode="after")
-    def resolve_uri(self) -> "XimcOptions":
+    def resolve_uri(self) -> "XimcConnectionSettings":
         """Reduce whichever one of uri, port and port_env was given to a URI."""
         match (self.uri, self.port, self.port_env):
             # URI
@@ -68,6 +66,17 @@ class XimcOptions(BaseModel):
     def is_virtual(self) -> bool:
         """Whether this URI addresses a libximc virtual (emulated) device."""
         return self.scheme == "xi-emu"
+
+
+class XimcOptions(BaseModel):
+    """Options for a single XIMC controller.
+
+    The device address lives on the `XimcConnection` the controller claims, so
+    what is left here is how the controller drives it.
+    """
+
+    poll_period: float = 0.2
+    """Period in seconds between reads of the device."""
 
 
 def _port_from_environment(name: str) -> str:

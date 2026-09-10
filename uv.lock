@@ -514,8 +514,8 @@ wheels = [
 
 [[package]]
 name = "fastcs"
-version = "0.14.3.dev2+g78fa05d77"
-source = { git = "https://github.com/DiamondLightSource/fastcs.git?branch=allow-colons-in-pv#78fa05d777baeb66748e515842711004c22533f0" }
+version = "0.14.2.dev50+g8cdee5187"
+source = { git = "https://github.com/DiamondLightSource/fastcs.git?branch=refactor-issue-422#8cdee518727a33af22a4ab177b9bb18b59609d34" }
 dependencies = [
     { name = "aioserial" },
     { name = "fastapi", extra = ["standard"] },
@@ -557,7 +557,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastcs", git = "https://github.com/DiamondLightSource/fastcs.git?branch=allow-colons-in-pv" },
+    { name = "fastcs", git = "https://github.com/DiamondLightSource/fastcs.git?branch=refactor-issue-422" },
     { name = "libximc", specifier = "==3.0.2" },
     { name = "p4p", specifier = ">=4.2.1" },
     { name = "pvi", specifier = ">=0.13.1" },

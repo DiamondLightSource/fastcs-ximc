@@ -7,20 +7,18 @@
 """
 
 from ._version import __version__
-from .config import XimcOptions
+from .config import XimcConnectionSettings, XimcOptions
+from .connection import XimcConnection
 from .controller import MotionInhibitedError, XimcController
-from .device import XimcDevice
-from .io import XimcSettingsIO, XimcSettingsIORef
 from .utils import DeviceNotFoundError, enumerate_device_uris, patch_strict_flags
 
 __all__ = [
     "DeviceNotFoundError",
     "MotionInhibitedError",
+    "XimcConnection",
+    "XimcConnectionSettings",
     "XimcController",
-    "XimcDevice",
     "XimcOptions",
-    "XimcSettingsIO",
-    "XimcSettingsIORef",
     "__version__",
     "enumerate_device_uris",
     "patch_strict_flags",

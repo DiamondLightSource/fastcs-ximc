@@ -24,7 +24,11 @@ Describe each controller in a `fastcs.yaml`:
 controllers:
   - id: AXIS1
     type: fastcs_ximc.XimcController
-    uri: xi-com:///dev/ttyACM0
+    connections:
+      ximc:
+        type: fastcs_ximc.XimcConnection
+        settings:
+          uri: xi-com:///dev/ttyACM0
 transport:
   - epicsca: {}
 ```
@@ -39,7 +43,7 @@ To try it without hardware, point `uri` at a virtual device - libximc creates
 the backing file on first use:
 
 ```yaml
-    uri: xi-emu:///tmp/fastcs-ximc/sim/axis.bin
+          uri: xi-emu:///tmp/fastcs-ximc/sim/axis.bin
 ```
 
 See [docs/index.md](docs/index.md) for the configuration and attribute

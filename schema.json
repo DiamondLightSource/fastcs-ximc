@@ -181,18 +181,66 @@
       "title": "RestTransport",
       "type": "object"
     },
-    "XimcControllerEntry": {
+    "XimcConnectionConfig": {
       "additionalProperties": false,
       "properties": {
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
         "type": {
-          "const": "fastcs_ximc.XimcController",
+          "const": "fastcs_ximc.XimcConnection",
           "title": "Type",
           "type": "string"
         },
+        "depends_on": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Depends On"
+        },
+        "settings": {
+          "$ref": "#/$defs/XimcConnectionSettings"
+        },
+        "reconnect_period": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reconnect Period"
+        },
+        "reconnect_attempts": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reconnect Attempts"
+        }
+      },
+      "required": [
+        "type",
+        "settings"
+      ],
+      "title": "XimcConnectionConfig",
+      "type": "object"
+    },
+    "XimcConnectionSettings": {
+      "description": "Where to find a single libximc device.\n\nA device is addressed by a full libximc URI. ``port``/``port_env`` are\nconvenience shorthands that expand to a ``xi-com://`` URI for the common\ncase of a directly attached serial controller.",
+      "properties": {
         "uri": {
           "anyOf": [
             {
@@ -228,6 +276,29 @@
           ],
           "default": null,
           "title": "Port Env"
+        }
+      },
+      "title": "XimcConnectionSettings",
+      "type": "object"
+    },
+    "XimcControllerEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "fastcs_ximc.XimcController",
+          "title": "Type",
+          "type": "string"
+        },
+        "connections": {
+          "additionalProperties": {
+            "$ref": "#/$defs/XimcConnectionConfig"
+          },
+          "title": "Connections",
+          "type": "object"
         },
         "poll_period": {
           "default": 0.2,
