@@ -69,11 +69,7 @@ class XimcConnectionSettings(BaseModel):
 
 
 class XimcOptions(BaseModel):
-    """Options for a single XIMC controller.
-
-    The device address lives on the `XimcConnection` the controller claims, so
-    what is left here is how the controller drives it.
-    """
+    """Options for a single XIMC controller. The address is on its connection."""
 
     poll_period: float = 0.2
     """Period in seconds between reads of the device."""

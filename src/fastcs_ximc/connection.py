@@ -28,19 +28,12 @@ READ_ONLY_GROUPS = (
 class XimcConnection(Connection):
     """Serialised, non-blocking access to one libximc ``Axis``.
 
-    Every libximc call is a blocking ctypes call over a serial link, so calls are
-    dispatched to a worker thread. The device handle is not safe for concurrent
-    use, so a lock serialises them.
+    Every libximc call is a blocking ctypes call over a serial link, so calls
+    are dispatched to a worker thread. The device handle is not safe for
+    concurrent use, so a lock serialises them.
 
-    libximc raises `ConnectionError` when the link has gone and the device must
-    be reopened, and `ValueError` when the device rejects a parameter, so `call`
-    can tell a dead link from a device complaint and mark only the first down.
-
-    Args:
-        settings: Which device to open
-        kwargs: Passed to `Connection` - ``depends_on``, ``reconnect_period``,
-            ``reconnect_attempts``
-
+    Opening, reopening and closing it are the runner's job, so there is no
+    reconnect logic here - only the report that the link has gone.
     """
 
     def __init__(self, settings: XimcConnectionSettings, **kwargs) -> None:
@@ -51,7 +44,6 @@ class XimcConnection(Connection):
 
     @property
     def uri(self) -> str:
-        """The resolved libximc URI of this device."""
         return self._settings.device_uri
 
     @property
@@ -80,11 +72,7 @@ class XimcConnection(Connection):
         logger.info("Opened libximc device", uri=self.uri)
 
     async def close(self) -> None:
-        """Close the device if it is open.
-
-        The handle is dropped before the close is attempted, so a dead link that
-        will not close does not block the next attempt to open one.
-        """
+        """Close the device if it is open, dropping the handle either way."""
         if self._axis is None:
             return
 
@@ -93,19 +81,13 @@ class XimcConnection(Connection):
         logger.info("Closed libximc device", uri=self.uri)
 
     async def call(self, func: Callable[[ximc.Axis], T]) -> T:
-        """Run ``func`` against the device handle in a worker thread.
-
-        Usage::
-
-            position = await connection.call(lambda axis: axis.get_position())
-        """
+        """Run ``func`` against the device handle in a worker thread."""
         async with self._lock:
             try:
                 return await asyncio.to_thread(func, self.axis)
             except OSError:
-                # libximc's "reopen the device" is a `ConnectionError`, and so an
-                # `OSError`. The transport is gone, rather than the device
-                # complaining, so everything holding this connection is now down.
+                # libximc raises ConnectionError - an OSError - when the device
+                # must be reopened, and ValueError when it rejects a parameter.
                 self.set_disconnected()
                 raise
 

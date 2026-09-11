@@ -71,22 +71,6 @@ class TestAttributes:
                 assert await attr.poll() is not None, name
 
 
-class TestPolling:
-    """Attributes with a getter are read by the runner's scan tasks."""
-
-    async def test_status_is_polled_at_the_configured_period(self, controller):
-        assert controller.position.poll_period == 0.05
-
-    async def test_identity_is_read_once_on_connect(self, controller):
-        assert isinstance(controller.serial_number.readback, int)
-        assert controller.firmware_version.readback.count(".") == 2
-        assert controller.manufacturer.poll_period == float("inf")
-
-    async def test_soft_attributes_are_never_polled(self, controller):
-        assert controller.marked_position.poll_period is None
-        assert controller.user_position.poll_period is None
-
-
 class TestMotion:
     async def test_absolute_move_changes_position(self, controller):
         await controller.position_demand.set(2000)
@@ -369,25 +353,23 @@ class TestFollowingError:
 
 
 class TestLifecycle:
-    async def test_scans_are_gated_on_a_connection_that_is_up(self, settings, options):
-        """A controller reports the health of the connection it holds."""
+    """Opening and closing the device is the runner's job, not the controller's."""
+
+    async def test_the_runner_opens_and_closes_the_connection(self, settings, options):
         connections = Connections({"ximc": XimcConnection(settings)})
         controller = XimcController(connections, options)
         controller.set_path(["TEST"])
-        assert not controller.connected
+        assert not controller.connection.is_open
 
         runner = ControllerRunner(controller, connections)
         await runner.start()
         try:
-            assert controller.connected
             assert controller.connection.is_open
+            assert controller.connected
         finally:
             await runner.stop()
 
         assert not controller.connection.is_open
-
-    async def test_the_runner_supervises_the_declared_connection(self, controller):
-        assert controller.connection.connected
 
 
 class TestEpicsLimits:

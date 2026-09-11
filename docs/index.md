@@ -22,23 +22,15 @@ controllers:
           uri: xi-com:///dev/ttyACM0
 ```
 
-Connection `settings:`
+| Field | Where | Default | Description |
+|---|---|---|---|
+| `uri` | `settings` | - | Full libximc URI, e.g. `xi-com:///dev/ttyACM0` |
+| `port` | `settings` | - | Serial device path; shorthand for `xi-com://<port>` |
+| `port_env` | `settings` | - | Environment variable holding the serial device path |
+| `poll_period` | entry | `0.2` | Seconds between reads of the device |
 
-| Field | Default | Description |
-|---|---|---|
-| `uri` | - | Full libximc URI, e.g. `xi-com:///dev/ttyACM0` |
-| `port` | - | Serial device path; shorthand for `xi-com://<port>` |
-| `port_env` | - | Environment variable holding the serial device path |
-
-Exactly one of `uri`, `port` or `port_env` must be given. `reconnect_period`
-and `reconnect_attempts` are FastCS `Connection` arguments and may be given
-alongside `settings:`.
-
-Controller options
-
-| Field | Default | Description |
-|---|---|---|
-| `poll_period` | `0.2` | Seconds between reads of the device |
+Exactly one of `uri`, `port` or `port_env` must be given. The connection also
+takes FastCS's `reconnect_period` and `reconnect_attempts`.
 
 ### URI schemes
 
@@ -303,36 +295,31 @@ against a PV prefix rather than as silently swapped axes.
 
 ## Implementation notes
 
-**Attributes carry their own IO.** Each attribute backed by the device gets a
-getter, and a setter if it is writable, built by `XimcController._reader` and
-`._writer` from a `(group, field)` pair: `("move", "Speed")` reads
+**Attributes carry their own IO.** `_read` and `_field` build the getter (and
+setter) for a `(group, field)` pair: `("move", "Speed")` reads
 `get_move_settings().Speed` and writes it back through `set_move_settings`. The
 groups in `READ_ONLY_GROUPS` use `get_<group>()` instead. Writes are
-read-modify-write because libximc rejects a partially populated struct.
-`._flag_reader`/`._flag_writer` read and write one flag of a bitmask field,
-leaving the other flags in the field untouched. A getter wrapped in `Polled` is
-read at `poll_period`; a bare getter - the `Device` group - is read once, when
-the connection opens.
+read-modify-write because libximc rejects a partially populated struct. Passing
+a flag reads and writes that one bit, leaving the rest of the field alone. A
+getter wrapped in `Polled` is read at `poll_period`; a bare getter is read once,
+when the connection opens.
 
 **Soft attributes are attributes without a getter or setter.** A soft `AttrRW`
-pushes a write straight to its own readback - which is exactly the marked
-position, the unit transform, the tweak step and the inhibit. Derived values
-(`user_position`, `following_error`) are `AttrR` recomputed from an
-`add_readback_callback` on each of their inputs, so they follow the poll loop
-without adding device traffic.
+pushes a write straight to its own readback - the marked position, the unit
+transform, the tweak step and the inhibit. Derived values (`user_position`,
+`following_error`) are `AttrR` recomputed from an `add_readback_callback` on
+each of their inputs, so they follow the poll loop without adding device
+traffic.
 
-**The connection owns the device handle.** `XimcConnection` is a FastCS
-`Connection`, so opening it, reopening it after a failure and closing it at
-shutdown are the `ControllerRunner`'s job, not the controller's. Every libximc
-call is a blocking ctypes call over a serial link, so the connection dispatches
-them to a worker thread behind a lock — the device handle is not safe for
-concurrent use.
+**The connection owns the device handle.** Opening, reopening and closing it are
+the `ControllerRunner`'s job. Every libximc call is a blocking ctypes call over
+a serial link, so the connection dispatches them to a worker thread behind a
+lock — the device handle is not safe for concurrent use.
 
 **Only a dead link marks the connection down.** libximc raises `ConnectionError`
 when the device must be reopened and `ValueError` when it rejects a parameter,
-so `XimcConnection.call` calls `set_disconnected()` for the first and lets the
-second through untouched. Scans on the controller are gated while the connection
-is down, and the runner's reconnect task reopens it.
+so `call` reports the first as a disconnection and lets the second through.
+Scans are gated while the connection is down, and the runner reopens it.
 
 **Strict flag enums are patched at open.** libximc models bitmask fields as
 `enum.Flag` with `STRICT` boundary, so a single undocumented bit from real
