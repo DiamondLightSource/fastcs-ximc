@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Protocol
+from typing import Any
 
 import libximc.highlevel as ximc
-from fastcs.connections import Connection
+from fastcs.connections import Connection, DRANode
 from fastcs.logging import logger
 
 from .config import XimcConnectionSettings
@@ -16,60 +16,6 @@ READ_ONLY_GROUPS = ("position", "status", "device_information")
 """Groups read with ``get_<group>()`` rather than ``get_<group>_settings()``."""
 
 
-# These move to `fastcs.connections` when the recovery PR lands; delete them
-# here and import them instead. Nothing else changes: the names, the signatures
-# and the semantics are the ones that PR provides.
-
-
-class Labelled(Protocol):
-    """All a policy needs of a connection: something to call it in a message."""
-
-    @property
-    def label(self) -> str: ...
-
-
-class Recovery:
-    """Whether a connection failure is worth retrying. The default: always.
-
-    Held by a connection rather than inherited into one, so the transport and
-    what to do when it fails are chosen separately - one policy can be given to
-    any connection, and a connection can be given any policy. Stateless, so one
-    instance is shared by every connection that uses it.
-    """
-
-    is_fatal: bool = False
-    """Whether a terminal failure should bring the application down."""
-
-    def is_terminal(self, exc: BaseException) -> bool:
-        """Whether a failed `Connection.connect` can never succeed in this process."""
-        return False
-
-    def reason(self, connection: Labelled) -> str:
-        """Why it cannot recover, for the log line that ends the retry loop."""
-        return f"{connection.label} cannot recover from this failure."
-
-
-class DRANode(Recovery):
-    """A device node injected by a Kubernetes DRA claim.
-
-    The claim is established when the pod starts, so a node that has gone will
-    not reappear in it. Retrying cannot help and a restart can, so this is both
-    terminal and fatal.
-    """
-
-    is_fatal = True
-
-    def is_terminal(self, exc: BaseException) -> bool:
-        return isinstance(exc, FileNotFoundError)
-
-    def reason(self, connection: Labelled) -> str:
-        return (
-            f"Device node {connection.label} has gone away. It comes from a "
-            "Kubernetes DRA claim and will not reappear in this pod. Restart "
-            "the pod to re-establish the claim."
-        )
-
-
 class XimcConnection(Connection):
     """Serialised, non-blocking access to one libximc ``Axis``.
 
@@ -77,9 +23,6 @@ class XimcConnection(Connection):
     go to a worker thread one at a time. Opening and reopening it is the
     runner's job.
     """
-
-    recovery: Recovery = Recovery()
-    """What to do when this connection fails. Assign one to change it."""
 
     def __init__(self, settings: XimcConnectionSettings, **kwargs) -> None:
         super().__init__(**kwargs)

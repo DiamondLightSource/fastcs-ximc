@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import pytest
-from fastcs.connections import Connection
+from fastcs.connections import Connection, DRANode, Recovery
 from pydantic import ValidationError
 
 from fastcs_ximc import (
@@ -11,7 +11,6 @@ from fastcs_ximc import (
     XimcConnectionSettings,
     XimcDRAConnection,
 )
-from fastcs_ximc.connections import DRANode, Recovery
 
 pytestmark = pytest.mark.asyncio
 
@@ -166,7 +165,10 @@ class TestRecovery:
             """Stands in for a serial or IP connection."""
 
             recovery = DRANode()
-            label = "/dev/ttyUSB0"
+
+            @property
+            def label(self) -> str:
+                return "/dev/ttyUSB0"
 
             async def connect(self) -> None: ...
 
@@ -183,16 +185,10 @@ class TestRecovery:
 
         assert connection.recovery.is_terminal(FileNotFoundError())
 
-    async def test_what_the_runner_would_do_with_it(self, settings):
-        """FastCS does not consult the policy yet. This is what it is for."""
+    async def test_the_policy_is_the_one_the_runner_reads(self, settings):
+        """The runner gives up at once on a terminal failure, and exits if fatal."""
         connection = XimcConnection(settings)
         connection.recovery = DRANode()
-        attempts = 0
 
-        for error in (ConnectionError("busy"), FileNotFoundError("node gone")):
-            attempts += 1
-            if connection.recovery.is_terminal(error):
-                break
-
-        assert attempts == 2
         assert isinstance(connection.recovery, Recovery)
+        assert connection.recovery.is_fatal

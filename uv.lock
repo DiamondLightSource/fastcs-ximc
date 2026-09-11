@@ -514,8 +514,8 @@ wheels = [
 
 [[package]]
 name = "fastcs"
-version = "0.14.2.dev51+g0f62b58cc"
-source = { git = "https://github.com/DiamondLightSource/fastcs.git?branch=connections-dra-mixin#0f62b58cc9698eedf85a43532b9268ec310ee449" }
+version = "0.14.2.dev52+g3e5a9b572"
+source = { git = "https://github.com/DiamondLightSource/fastcs.git?branch=connections-dra-mixin#3e5a9b572a4882c33e9320656ac62fd54bb9626c" }
 dependencies = [
     { name = "aioserial" },
     { name = "fastapi", extra = ["standard"] },
