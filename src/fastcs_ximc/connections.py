@@ -7,7 +7,6 @@ from typing import Any
 
 import libximc.highlevel as ximc
 from fastcs.connections import Connection
-from fastcs.connections.dra import DRADeviceMixin
 from fastcs.logging import logger
 
 from .config import XimcConnectionSettings
@@ -17,6 +16,40 @@ READ_ONLY_GROUPS = ("position", "status", "device_information")
 """Groups read with ``get_<group>()`` rather than ``get_<group>_settings()``."""
 
 
+class Recovery:
+    """Whether a connection failure is worth retrying. The default: always.
+
+    Held by a connection rather than inherited into one, so the transport and
+    what to do when it fails are chosen separately - one policy can be given to
+    any connection, and a connection can be given any policy. Stateless, so one
+    instance is shared by every connection that uses it.
+    """
+
+    def is_terminal(self, exc: BaseException) -> bool:
+        return False
+
+    def reason(self, node: str) -> str:
+        return f"Cannot reach {node}."
+
+
+class DRANode(Recovery):
+    """A device node injected by a Kubernetes DRA claim.
+
+    The node will not reappear in this pod once it has gone, so a missing one
+    is terminal rather than something to retry.
+    """
+
+    def is_terminal(self, exc: BaseException) -> bool:
+        return isinstance(exc, FileNotFoundError)
+
+    def reason(self, node: str) -> str:
+        return (
+            f"Device node {node} has gone away. It comes from a Kubernetes DRA "
+            "claim and will not reappear in this pod. Restart the pod to "
+            "re-establish the claim."
+        )
+
+
 class XimcConnection(Connection):
     """Serialised, non-blocking access to one libximc ``Axis``.
 
@@ -24,6 +57,9 @@ class XimcConnection(Connection):
     go to a worker thread one at a time. Opening and reopening it is the
     runner's job.
     """
+
+    recovery: Recovery = Recovery()
+    """What to do when this connection fails. Assign one to change it."""
 
     def __init__(self, settings: XimcConnectionSettings, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -38,6 +74,17 @@ class XimcConnection(Connection):
     @property
     def is_open(self) -> bool:
         return self._axis is not None
+
+    @property
+    def _node(self) -> str:
+        """The device node the URI addresses, to name it in a failure."""
+        return self.uri.split("://", 1)[1]
+
+    def is_terminal(self, exc: BaseException) -> bool:
+        return self.recovery.is_terminal(exc)
+
+    def unrecoverable_reason(self) -> str:
+        return self.recovery.reason(self._node)
 
     async def connect(self) -> None:
         """Open the device, creating virtual device state files if needed."""
@@ -107,19 +154,16 @@ class XimcConnection(Connection):
             raise
 
 
-class XimcDRAConnection(DRADeviceMixin, XimcConnection):
+class XimcDRAConnection(XimcConnection):
     """A XIMC device whose node comes from a Kubernetes DRA claim.
 
     The claim names the node at runtime, so the only thing that can be
     configured is the variable holding it - hence ``port_env`` rather than the
-    settings its parent takes. A node that has gone will not come back in this
-    pod, which is what the mixin makes terminal.
+    settings its parent takes. Subclassed for that config shape alone: the
+    behaviour is `DRANode`, which it holds.
     """
+
+    recovery = DRANode()
 
     def __init__(self, port_env: str, **kwargs) -> None:
         super().__init__(XimcConnectionSettings(port_env=port_env), **kwargs)
-
-    @property
-    def _node_path(self) -> str:
-        """The node ``port_env`` resolved to, e.g. ``/dev/ttyACM0``."""
-        return self.uri.removeprefix("xi-com://")

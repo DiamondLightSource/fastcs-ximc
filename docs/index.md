@@ -342,8 +342,16 @@ the `ControllerRunner`'s job. It offers `read`, `read_struct`, `write` and
 `command` - naming the libximc call rather than handing out the handle - and
 every one of them is a blocking ctypes call over a serial link, so they are
 dispatched to a worker thread behind a lock; the handle is not safe for
-concurrent use. `XimcDRAConnection` adds nothing but where its device node is:
-FastCS's `DRADeviceMixin` supplies the rest.
+concurrent use.
+
+**What to do about a failure is an object, not a base class.** A connection
+holds a `Recovery`, and FastCS's `is_terminal`/`unrecoverable_reason` hooks
+delegate to it. `DRANode` is one such policy; `XimcDRAConnection` holds it
+rather than inheriting it, so the same policy would serve a serial or IP
+connection without a subclass of each, swapping it is an assignment, and there
+is no mixin ordering to get wrong. Note that FastCS does not consult
+`is_terminal` yet, so today this says what should happen rather than making it
+happen.
 
 **Only a dead link marks the connection down.** libximc raises `ConnectionError`
 when the device must be reopened and `ValueError` when it rejects a parameter,
