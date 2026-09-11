@@ -5,7 +5,7 @@ controllers:
     type: fastcs_ximc.XimcController
 
     connections:
-      ximc:
+      motor:
         type: fastcs_ximc.XimcConnection
         settings:
           ### Full uri

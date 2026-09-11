@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any
 
 import libximc.highlevel as ximc
 from fastcs.connections import Connection
@@ -13,15 +12,7 @@ from fastcs.logging import logger
 from .config import XimcConnectionSettings
 from .utils import check_device_present, patch_strict_flags, prepare_virtual_device
 
-T = TypeVar("T")
-
-READ_ONLY_GROUPS = (
-    "position",
-    "status",
-    "device_information",
-    "controller_name",
-    "stage_name",
-)
+READ_ONLY_GROUPS = ("position", "status", "device_information")
 """Groups read with ``get_<group>()`` rather than ``get_<group>_settings()``."""
 
 
@@ -50,13 +41,6 @@ class XimcConnection(Connection):
     def is_open(self) -> bool:
         return self._axis is not None
 
-    @property
-    def axis(self) -> ximc.Axis:
-        """The underlying libximc handle. Prefer `call` over using this directly."""
-        if self._axis is None:
-            raise ConnectionError(f"Device at '{self.uri}' is not open")
-        return self._axis
-
     async def connect(self) -> None:
         """Open the device, creating virtual device state files if needed."""
         # Real hardware reports bits libximc's strict Flag enums reject, which
@@ -80,48 +64,46 @@ class XimcConnection(Connection):
         await asyncio.to_thread(axis.close_device)
         logger.info("Closed libximc device", uri=self.uri)
 
-    async def call(self, func: Callable[[ximc.Axis], T]) -> T:
-        """Run ``func`` against the device handle in a worker thread."""
+    async def read_struct(self, group: str) -> Any:
+        """Read a whole settings or state struct."""
         async with self._lock:
-            try:
-                return await asyncio.to_thread(func, self.axis)
-            except OSError:
-                # libximc raises ConnectionError - an OSError - when the device
-                # must be reopened, and ValueError when it rejects a parameter.
-                self.set_disconnected()
-                raise
+            suffix = "" if group in READ_ONLY_GROUPS else "_settings"
+            return await self._call(f"get_{group}{suffix}")
 
-    async def read_field(self, group: str, field: str) -> Any:
-        """Read one field of a settings/state struct."""
-        return await self.call(lambda axis: getattr(_get_struct(axis, group), field))
+    async def read(self, group: str, field: str) -> Any:
+        """Read one field of a settings or state struct."""
+        return getattr(await self.read_struct(group), field)
 
-    async def write_field(self, group: str, field: str, value: Any) -> None:
-        """Read-modify-write one field of a settings struct.
+    async def write(
+        self, group: str, field: str, value: Any, bit: int | None = None
+    ) -> None:
+        """Write one field of a settings struct, or one bit of one.
 
-        libximc rejects a partially populated struct, so the whole struct must
-        be read back, mutated and written out again.
+        libximc rejects a partially populated struct, so the whole struct is
+        read back, mutated and written out again, under one lock.
         """
-
-        def _write(axis: ximc.Axis) -> None:
-            struct = _get_struct(axis, group)
+        async with self._lock:
+            struct = await self._call(f"get_{group}_settings")
+            if bit is not None:
+                raw = int(getattr(struct, field))
+                value = raw | bit if value else raw & ~bit
             setattr(struct, field, value)
-            getattr(axis, f"set_{group}_settings")(struct)
+            await self._call(f"set_{group}_settings", struct)
 
-        await self.call(_write)
+    async def command(self, name: str, *args: Any) -> None:
+        """Send a libximc ``command_<name>``, e.g. ``command("move", 100, 0)``."""
+        async with self._lock:
+            await self._call(f"command_{name}", *args)
 
-    async def write_bit(self, group: str, field: str, mask: int, value: bool) -> None:
-        """Read-modify-write a single bit of a bitmask field of a settings struct."""
+    async def _call(self, method: str, *args: Any) -> Any:
+        """Call one method of the handle in a worker thread. Lock held by caller."""
+        if self._axis is None:
+            raise ConnectionError(f"Device at '{self.uri}' is not open")
 
-        def _write(axis: ximc.Axis) -> None:
-            struct = _get_struct(axis, group)
-            raw = int(getattr(struct, field))
-            setattr(struct, field, raw | mask if value else raw & ~mask)
-            getattr(axis, f"set_{group}_settings")(struct)
-
-        await self.call(_write)
-
-
-def _get_struct(axis: ximc.Axis, group: str) -> Any:
-    if group in READ_ONLY_GROUPS:
-        return getattr(axis, f"get_{group}")()
-    return getattr(axis, f"get_{group}_settings")()
+        try:
+            return await asyncio.to_thread(getattr(self._axis, method), *args)
+        except OSError:
+            # libximc raises ConnectionError - an OSError - when the device must
+            # be reopened, and ValueError when it rejects a parameter.
+            self.set_disconnected()
+            raise

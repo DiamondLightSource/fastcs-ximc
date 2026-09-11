@@ -25,7 +25,7 @@ controllers:
   - id: AXIS1
     type: fastcs_ximc.XimcController
     connections:
-      ximc:
+      motor:
         type: fastcs_ximc.XimcConnection
         settings:
           uri: xi-com:///dev/ttyACM0

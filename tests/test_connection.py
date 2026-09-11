@@ -9,6 +9,15 @@ from fastcs_ximc import XimcConnection, XimcConnectionSettings
 pytestmark = pytest.mark.asyncio
 
 
+def _raise(error: Exception):
+    """Stand in for a libximc call that fails."""
+
+    def fail(*args):
+        raise error
+
+    return fail
+
+
 class TestXimcConnection:
     async def test_connect_creates_state_file(self, settings, device_uri):
         path = Path(device_uri.removeprefix("xi-emu://"))
@@ -24,9 +33,9 @@ class TestXimcConnection:
 
         assert not connection.is_open
 
-    async def test_axis_raises_before_connect(self, settings):
+    async def test_reading_before_connect_raises(self, settings):
         with pytest.raises(ConnectionError, match="is not open"):
-            _ = XimcConnection(settings).axis
+            await XimcConnection(settings).read("position", "Position")
 
     async def test_close_before_connect_is_a_no_op(self, settings):
         """The runner closes before every reconnect; that must be free."""
@@ -38,54 +47,54 @@ class TestXimcConnection:
 
     async def test_reconnect_gets_a_fresh_handle(self, connection):
         """A reconnect attempt is a close followed by a connect."""
-        handle = connection.axis
+        handle = connection._axis
 
         await connection.close()
         await connection.connect()
 
-        assert connection.axis is not handle
+        assert connection._axis is not handle
 
-    async def test_read_field(self, connection):
-        assert await connection.read_field("position", "Position") == 0
-        assert await connection.read_field("move", "Speed") == 1000
+    async def test_read(self, connection):
+        assert await connection.read("position", "Position") == 0
+        assert await connection.read("move", "Speed") == 1000
 
-    async def test_write_field_round_trips(self, connection):
-        await connection.write_field("move", "Speed", 750)
-        assert await connection.read_field("move", "Speed") == 750
+    async def test_read_struct(self, connection):
+        assert (await connection.read_struct("position")).Position == 0
 
-    async def test_write_field_preserves_other_fields(self, connection):
+    async def test_write_round_trips(self, connection):
+        await connection.write("move", "Speed", 750)
+        assert await connection.read("move", "Speed") == 750
+
+    async def test_write_preserves_other_fields(self, connection):
         """A write must read-modify-write; libximc rejects partial structs."""
-        accel = await connection.read_field("move", "Accel")
+        accel = await connection.read("move", "Accel")
 
-        await connection.write_field("move", "Speed", 321)
+        await connection.write("move", "Speed", 321)
 
-        assert await connection.read_field("move", "Accel") == accel
-        assert await connection.read_field("move", "Speed") == 321
+        assert await connection.read("move", "Accel") == accel
+        assert await connection.read("move", "Speed") == 321
 
-    async def test_call_runs_against_the_handle(self, connection):
-        position = await connection.call(lambda axis: axis.get_position())
-        assert position.Position == 0
+    async def test_command(self, connection):
+        await connection.command("move", 500, 0)
+        assert await connection.read("status", "MvCmdSts")
 
     async def test_a_dead_link_marks_the_connection_down(self, connection):
         """libximc raises ConnectionError when the device must be reopened."""
         connection._set_connected()
-
-        def _gone(axis):
-            raise ConnectionError("Cannot send command to the device")
+        connection._axis.command_stop = _raise(ConnectionError("device gone"))
 
         with pytest.raises(ConnectionError):
-            await connection.call(_gone)
+            await connection.command("stop")
 
         assert not connection.connected
 
     async def test_a_rejected_value_leaves_the_connection_up(self, connection):
+        """libximc raises ValueError when the device rejects a parameter."""
         connection._set_connected()
-
-        def _rejected(axis):
-            raise ValueError("The input was rejected by the device")
+        connection._axis.command_stop = _raise(ValueError("rejected"))
 
         with pytest.raises(ValueError, match="rejected"):
-            await connection.call(_rejected)
+            await connection.command("stop")
 
         assert connection.connected
 

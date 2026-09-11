@@ -47,7 +47,7 @@ async def connection(settings: XimcConnectionSettings):
 @pytest_asyncio.fixture
 async def controller(settings: XimcConnectionSettings, options: XimcOptions):
     """A `XimcController` taken through the FastCS startup sequence."""
-    connections = Connections({"ximc": XimcConnection(settings)})
+    connections = Connections({"motor": XimcConnection(settings)})
     controller = XimcController(connections, options)
     controller.set_path(["TEST"])
     runner = ControllerRunner(controller, connections)

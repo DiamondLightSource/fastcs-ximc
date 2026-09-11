@@ -8,7 +8,7 @@ instance drives one device.
 
 Each entry under `controllers:` in `fastcs.yaml` configures one device. The
 device is addressed by a `XimcConnection` declared in that entry's
-`connections:` block, under the role name `ximc`:
+`connections:` block, under the role name `motor`:
 
 ```yaml
 controllers:
@@ -16,7 +16,7 @@ controllers:
     type: fastcs_ximc.XimcController
     poll_period: 0.2
     connections:
-      ximc:
+      motor:
         type: fastcs_ximc.XimcConnection
         settings:
           uri: xi-com:///dev/ttyACM0
@@ -45,6 +45,10 @@ For `xi-emu://`, libximc creates the backing `.bin` file with default settings
 on first open; the driver creates its parent directory.
 
 ## Attributes
+
+**This preview implements one attribute of each shape**, not the whole set - the
+controller carries a comment in each group saying what the rest of it is made
+of. The tables below are the full driver as it stands on `main`.
 
 Read-only attributes are marked `R`, read-write `RW`, write-only `W`.
 
@@ -253,20 +257,20 @@ controllers:
   - id: STAGE-X
     type: fastcs_ximc.XimcController
     connections:
-      ximc:
+      motor:
         type: fastcs_ximc.XimcConnection
         settings:
           uri: xi-com:///dev/ttyACM0
   - id: STAGE-Y
     type: fastcs_ximc.XimcController
     connections:
-      ximc:
+      motor:
         type: fastcs_ximc.XimcConnection
         settings:
           uri: xi-com:///dev/ttyACM1
 ```
 
-Connection role names are local to an entry, so both axes claim `ximc` and get
+Connection role names are local to an entry, so both axes claim `motor` and get
 their own connection. Each entry gets its own device handle, its own lock, its
 own reconnect budget and its own PV prefix. Since libximc offers no shared
 handle, there is nothing for the axes to contend over.
@@ -302,7 +306,8 @@ groups in `READ_ONLY_GROUPS` use `get_<group>()` instead. Writes are
 read-modify-write because libximc rejects a partially populated struct. Passing
 a flag reads and writes that one bit, leaving the rest of the field alone. A
 getter wrapped in `Polled` is read at `poll_period`; a bare getter is read once,
-when the connection opens.
+when the connection opens. An attribute that is not one field of one struct
+writes its own getter, as `firmware_version` does.
 
 **Soft attributes are attributes without a getter or setter.** A soft `AttrRW`
 pushes a write straight to its own readback - the marked position, the unit
@@ -312,9 +317,11 @@ each of their inputs, so they follow the poll loop without adding device
 traffic.
 
 **The connection owns the device handle.** Opening, reopening and closing it are
-the `ControllerRunner`'s job. Every libximc call is a blocking ctypes call over
-a serial link, so the connection dispatches them to a worker thread behind a
-lock — the device handle is not safe for concurrent use.
+the `ControllerRunner`'s job. It offers `read`, `read_struct`, `write` and
+`command` - naming the libximc call rather than handing out the handle - and
+every one of them is a blocking ctypes call over a serial link, so they are
+dispatched to a worker thread behind a lock; the handle is not safe for
+concurrent use.
 
 **Only a dead link marks the connection down.** libximc raises `ConnectionError`
 when the device must be reopened and `ValueError` when it rejects a parameter,
