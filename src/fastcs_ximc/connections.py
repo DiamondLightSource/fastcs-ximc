@@ -1,9 +1,15 @@
-"""The libximc device handle as FastCS `Connection` s."""
+"""The libximc device handle as `Logic` given to a `DeviceConnection`.
+
+The composition spelling of `XimcConnection`: everything libximc lives in a
+`XimcLogic` with no framework base class, and a generic connection holds one.
+`DeviceConnection` stands in for the concrete, non-abstract `Connection` this
+would need from FastCS, whose own `Connection` is still an ABC.
+"""
 
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import Any, Generic, Protocol, TypeVar
 
 import libximc.highlevel as ximc
 from fastcs.connections import Connection, DRANode
@@ -16,19 +22,66 @@ READ_ONLY_GROUPS = ("position", "status", "device_information")
 """Groups read with ``get_<group>()`` rather than ``get_<group>_settings()``."""
 
 
-class XimcConnection(Connection):
+class Logic(Protocol):
+    """What a `DeviceConnection` needs of the thing that knows the device.
+
+    The framework half of the split: a connection can open, close and name
+    whatever it is given, and knows nothing else about it.
+    """
+
+    connection: Connection | None
+    """Set by the connection that holds it, so IO can report a dead link."""
+
+    @property
+    def label(self) -> str: ...
+
+    async def open(self) -> None: ...
+
+    async def close(self) -> None: ...
+
+
+LogicT = TypeVar("LogicT", bound=Logic)
+
+
+class DeviceConnection(Connection, Generic[LogicT]):
+    """A connection that owns no device knowledge: it holds a `Logic`.
+
+    Stands in for the concrete, non-abstract `Connection` this spelling needs
+    from FastCS. It owns the health state, the retry settings and the recovery
+    policy; the logic owns the handle and the protocol.
+    """
+
+    def __init__(self, logic: LogicT, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.logic = logic
+        # The back-reference the split needs: failure is detected in the IO,
+        # which now lives in an object that does not own the health state.
+        logic.connection = self
+
+    @property
+    def label(self) -> str:
+        return self.logic.label
+
+    async def connect(self) -> None:
+        await self.logic.open()
+
+    async def close(self) -> None:
+        await self.logic.close()
+
+
+class XimcLogic:
     """Serialised, non-blocking access to one libximc ``Axis``.
 
     libximc calls block, and the handle is not safe for concurrent use, so they
     go to a worker thread one at a time. Opening and reopening it is the
-    runner's job.
+    runner's job, through the connection holding this.
     """
 
-    def __init__(self, settings: XimcConnectionSettings, **kwargs) -> None:
-        super().__init__(**kwargs)
+    def __init__(self, settings: XimcConnectionSettings) -> None:
         self._settings = settings
         self._axis: ximc.Axis | None = None
         self._lock = asyncio.Lock()
+        self.connection: Connection | None = None
 
     @property
     def uri(self) -> str:
@@ -40,10 +93,10 @@ class XimcConnection(Connection):
 
     @property
     def label(self) -> str:
-        """The device node this connection addresses, to name it in a failure."""
+        """The device node this addresses, to name it in a failure."""
         return self.uri.split("://", 1)[1]
 
-    async def connect(self) -> None:
+    async def open(self) -> None:
         """Open the device, creating virtual device state files if needed."""
         # Real hardware reports bits libximc's strict Flag enums reject, which
         # would make every get_*_settings call raise. Patch before opening.
@@ -106,9 +159,18 @@ class XimcConnection(Connection):
             return await asyncio.to_thread(getattr(self._axis, method), *args)
         except OSError:
             # libximc raises ConnectionError - an OSError - when the device must
-            # be reopened, and ValueError when it rejects a parameter.
-            self.set_disconnected()
+            # be reopened, and ValueError when it rejects a parameter. Reported
+            # through the connection, which owns the health state.
+            if self.connection is not None:
+                self.connection.set_disconnected()
             raise
+
+
+class XimcConnection(DeviceConnection[XimcLogic]):
+    """A libximc device. Carries the config shape and the logic type, nothing else."""
+
+    def __init__(self, settings: XimcConnectionSettings, **kwargs) -> None:
+        super().__init__(XimcLogic(settings), **kwargs)
 
 
 class XimcDRAConnection(XimcConnection):

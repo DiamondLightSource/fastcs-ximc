@@ -33,15 +33,15 @@ class TestXimcConnection:
         await connection.connect()
         try:
             assert path.exists()
-            assert connection.is_open
+            assert connection.logic.is_open
         finally:
             await connection.close()
 
-        assert not connection.is_open
+        assert not connection.logic.is_open
 
     async def test_reading_before_connect_raises(self, settings):
         with pytest.raises(ConnectionError, match="is not open"):
-            await XimcConnection(settings).read("position", "Position")
+            await XimcConnection(settings).logic.read("position", "Position")
 
     async def test_close_before_connect_is_a_no_op(self, settings):
         """The runner closes before every reconnect; that must be free."""
@@ -49,58 +49,58 @@ class TestXimcConnection:
 
         await connection.close()
 
-        assert not connection.is_open
+        assert not connection.logic.is_open
 
     async def test_reconnect_gets_a_fresh_handle(self, connection):
         """A reconnect attempt is a close followed by a connect."""
-        handle = connection._axis
+        handle = connection.logic._axis
 
         await connection.close()
         await connection.connect()
 
-        assert connection._axis is not handle
+        assert connection.logic._axis is not handle
 
     async def test_read(self, connection):
-        assert await connection.read("position", "Position") == 0
-        assert await connection.read("move", "Speed") == 1000
+        assert await connection.logic.read("position", "Position") == 0
+        assert await connection.logic.read("move", "Speed") == 1000
 
     async def test_read_struct(self, connection):
-        assert (await connection.read_struct("position")).Position == 0
+        assert (await connection.logic.read_struct("position")).Position == 0
 
     async def test_write_round_trips(self, connection):
-        await connection.write("move", "Speed", 750)
-        assert await connection.read("move", "Speed") == 750
+        await connection.logic.write("move", "Speed", 750)
+        assert await connection.logic.read("move", "Speed") == 750
 
     async def test_write_preserves_other_fields(self, connection):
         """A write must read-modify-write; libximc rejects partial structs."""
-        accel = await connection.read("move", "Accel")
+        accel = await connection.logic.read("move", "Accel")
 
-        await connection.write("move", "Speed", 321)
+        await connection.logic.write("move", "Speed", 321)
 
-        assert await connection.read("move", "Accel") == accel
-        assert await connection.read("move", "Speed") == 321
+        assert await connection.logic.read("move", "Accel") == accel
+        assert await connection.logic.read("move", "Speed") == 321
 
     async def test_command(self, connection):
-        await connection.command("move", 500, 0)
-        assert await connection.read("status", "MvCmdSts")
+        await connection.logic.command("move", 500, 0)
+        assert await connection.logic.read("status", "MvCmdSts")
 
     async def test_a_dead_link_marks_the_connection_down(self, connection):
         """libximc raises ConnectionError when the device must be reopened."""
         connection._set_connected()
-        connection._axis.command_stop = _raise(ConnectionError("device gone"))
+        connection.logic._axis.command_stop = _raise(ConnectionError("device gone"))
 
         with pytest.raises(ConnectionError):
-            await connection.command("stop")
+            await connection.logic.command("stop")
 
         assert not connection.connected
 
     async def test_a_rejected_value_leaves_the_connection_up(self, connection):
         """libximc raises ValueError when the device rejects a parameter."""
         connection._set_connected()
-        connection._axis.command_stop = _raise(ValueError("rejected"))
+        connection.logic._axis.command_stop = _raise(ValueError("rejected"))
 
         with pytest.raises(ValueError, match="rejected"):
-            await connection.command("stop")
+            await connection.logic.command("stop")
 
         assert connection.connected
 
@@ -125,7 +125,7 @@ class TestXimcDRAConnection:
 
     async def test_the_node_is_what_port_env_resolved_to(self, connection):
         assert connection.label == "/dev/ttyACM0"
-        assert connection.uri == "xi-com:///dev/ttyACM0"
+        assert connection.logic.uri == "xi-com:///dev/ttyACM0"
 
     async def test_a_missing_device_node_is_terminal(self, connection):
         assert connection.recovery.is_terminal(FileNotFoundError())

@@ -26,7 +26,7 @@ async def _wait_until(predicate, timeout: float = 5.0) -> None:
 
 
 async def _position_is(controller: XimcController, expected: int) -> bool:
-    return await controller.connection.read("position", "Position") == expected
+    return await controller.connection.logic.read("position", "Position") == expected
 
 
 class TestAttributes:
@@ -40,7 +40,7 @@ class TestAttributes:
         assert controller.speed.readback == 600
 
     async def test_temperature_is_scaled_to_degrees(self, controller):
-        raw = await controller.connection.read("status", "CurT")
+        raw = await controller.connection.logic.read("status", "CurT")
         await controller.temperature.poll()
         assert controller.temperature.readback == pytest.approx(raw / 10, abs=0.5)
 
@@ -50,14 +50,17 @@ class TestAttributes:
 
     async def test_bit_round_trips_without_disturbing_the_struct(self, controller):
         """The other flags of the BorderFlags field must survive the write."""
-        border = int(await controller.connection.read("edges", "BorderFlags"))
+        border = int(await controller.connection.logic.read("edges", "BorderFlags"))
 
         await controller.stop_at_low_limit.set(True)
         await controller.stop_at_low_limit.poll()
 
         assert controller.stop_at_low_limit.readback is True
         expected = border | ximc.BorderFlags.BORDER_STOP_LEFT.value
-        assert int(await controller.connection.read("edges", "BorderFlags")) == expected
+        assert (
+            int(await controller.connection.logic.read("edges", "BorderFlags"))
+            == expected
+        )
 
     async def test_device_information_is_read_once_on_connect(self, controller):
         assert controller.manufacturer.readback == "XIMC"
@@ -140,17 +143,17 @@ class TestLifecycle:
         connections = Connections({"motor": XimcConnection(settings)})
         controller = XimcController(connections, options)
         controller.set_path(["TEST"])
-        assert not controller.connection.is_open
+        assert not controller.connection.logic.is_open
 
         runner = ControllerRunner(controller, connections)
         await runner.start()
         try:
-            assert controller.connection.is_open
+            assert controller.connection.logic.is_open
             assert controller.connected
         finally:
             await runner.stop()
 
-        assert not controller.connection.is_open
+        assert not controller.connection.logic.is_open
 
 
 class TestEpicsLimits:

@@ -164,7 +164,7 @@ class XimcController(Controller):
         """
 
         async def read() -> Any:
-            raw = await self.connection.read(group, field)
+            raw = await self.connection.logic.read(group, field)
             if bit is not None:
                 return bool(int(raw) & int(bit.value))
             return raw / scale if scale != 1.0 else raw
@@ -183,15 +183,17 @@ class XimcController(Controller):
 
         async def write(value: Any) -> None:
             if bit is not None:
-                await self.connection.write(group, field, value, int(bit.value))
+                await self.connection.logic.write(group, field, value, int(bit.value))
             else:
-                await self.connection.write(group, field, _to_device(value, scale))
+                await self.connection.logic.write(
+                    group, field, _to_device(value, scale)
+                )
 
         return self._read(group, field, bit, scale=scale), write
 
     async def _read_firmware_version(self) -> str:
         """A getter that is not one field: three of them, as one string."""
-        info = await self.connection.read_struct("device_information")
+        info = await self.connection.logic.read_struct("device_information")
         return f"{info.Major}.{info.Minor}.{info.Release}"
 
     # --- Unit conversion ----------------------------------------------------
@@ -219,21 +221,21 @@ class XimcController(Controller):
     async def _move_absolute(self, value: int) -> None:
         self._check_motion_allowed()
         logger.info("Moving to absolute position", path=self.path, steps=value)
-        await self.connection.command("move", value, 0)
+        await self.connection.logic.command("move", value, 0)
 
     # --- Commands -----------------------------------------------------------
 
     @command(group="Motion")
     async def stop(self) -> None:
         """Stop immediately, ignoring the ramp."""
-        await self.connection.command("stop")
+        await self.connection.logic.command("stop")
 
     @command(group="Motion")
     async def jog_forward(self) -> None:
         """Jog forward until stopped."""
         self._check_motion_allowed()
         # libximc's "right" is increasing steps, which this driver calls forward
-        await self.connection.command("right")
+        await self.connection.logic.command("right")
 
     # soft_stop, jog_reverse, loft, home, home_and_zero, zero, power_off and
     # the two flash commands are these two shapes with another libximc command.
