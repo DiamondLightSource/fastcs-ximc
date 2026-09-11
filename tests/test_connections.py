@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from fastcs_ximc import XimcConnection, XimcConnectionSettings, XimcDRAConnection
 
@@ -112,22 +113,25 @@ class TestXimcConnection:
 class TestXimcDRAConnection:
     """A claimed device node is gone for good, so a missing one is terminal."""
 
-    async def test_a_missing_device_node_is_terminal(self):
-        connection = XimcDRAConnection(XimcConnectionSettings(port="/dev/ttyACM0"))
+    @pytest.fixture
+    def connection(self, monkeypatch):
+        monkeypatch.setenv("AXIS_PORT", "/dev/ttyACM0")
+        return XimcDRAConnection(port_env="AXIS_PORT")
 
-        assert connection.is_terminal(FileNotFoundError())
+    async def test_the_node_is_what_port_env_resolved_to(self, connection):
         assert connection._node_path == "/dev/ttyACM0"
+        assert connection.uri == "xi-com:///dev/ttyACM0"
 
-    async def test_other_failures_are_not_terminal(self):
-        connection = XimcDRAConnection(XimcConnectionSettings(port="/dev/ttyACM0"))
-
+    async def test_a_missing_device_node_is_terminal(self, connection):
+        assert connection.is_terminal(FileNotFoundError())
         assert not connection.is_terminal(ConnectionError("device gone"))
 
-    async def test_it_is_a_ximc_connection(self, settings):
+    async def test_it_is_a_ximc_connection(self, connection):
         """So a controller claiming a `XimcConnection` accepts one."""
-        connection = XimcDRAConnection(settings)
-        await connection.connect()
-        try:
-            assert await connection.read("position", "Position") == 0
-        finally:
-            await connection.close()
+        assert isinstance(connection, XimcConnection)
+
+    async def test_an_unset_variable_is_reported(self, monkeypatch):
+        monkeypatch.delenv("MISSING_PORT", raising=False)
+
+        with pytest.raises(ValidationError, match="MISSING_PORT"):
+            XimcDRAConnection(port_env="MISSING_PORT")

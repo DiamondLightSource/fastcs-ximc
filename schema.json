@@ -349,8 +349,9 @@
           ],
           "title": "Depends On"
         },
-        "settings": {
-          "$ref": "#/$defs/XimcConnectionSettings"
+        "port_env": {
+          "title": "Port Env",
+          "type": "string"
         },
         "reconnect_period": {
           "anyOf": [
@@ -379,7 +380,7 @@
       },
       "required": [
         "type",
-        "settings"
+        "port_env"
       ],
       "title": "XimcDRAConnectionConfig",
       "type": "object"

@@ -35,10 +35,23 @@ takes FastCS's `reconnect_period` and `reconnect_attempts`, alongside
 
 `type:` picks the connection class:
 
-| Class | Use |
-|---|---|
-| `fastcs_ximc.XimcConnection` | A libximc device on a node that is always there |
-| `fastcs_ximc.XimcDRAConnection` | The same, on a node injected by a Kubernetes DRA claim - a node that has gone will not reappear in the pod, so a missing one is terminal rather than something to retry |
+| Class | Takes | Use |
+|---|---|---|
+| `fastcs_ximc.XimcConnection` | `settings:` as above | A libximc device on a node that is always there |
+| `fastcs_ximc.XimcDRAConnection` | `port_env:` and nothing else | A node injected by a Kubernetes DRA claim |
+
+A claim names its node at runtime, so a `XimcDRAConnection` is configured with
+the variable holding it - a `uri:` or a `port:` written into the config would be
+a guess, and the schema rejects both. A node that has gone will not reappear in
+the pod, so a missing one is terminal rather than something to retry:
+
+```yaml
+      motor:
+        type: fastcs_ximc.XimcDRAConnection
+        port_env: AXIS_Y_PORT
+        reconnect_period: 5.0
+        reconnect_attempts: 3
+```
 
 ### URI schemes
 

@@ -110,10 +110,16 @@ class XimcConnection(Connection):
 class XimcDRAConnection(DRADeviceMixin, XimcConnection):
     """A XIMC device whose node comes from a Kubernetes DRA claim.
 
-    The device node will not reappear in this pod once it has gone, so the
-    mixin makes a missing one terminal rather than something to retry.
+    The claim names the node at runtime, so the only thing that can be
+    configured is the variable holding it - hence ``port_env`` rather than the
+    settings its parent takes. A node that has gone will not come back in this
+    pod, which is what the mixin makes terminal.
     """
+
+    def __init__(self, port_env: str, **kwargs) -> None:
+        super().__init__(XimcConnectionSettings(port_env=port_env), **kwargs)
 
     @property
     def _node_path(self) -> str:
-        return self._settings.port or self.uri
+        """The node ``port_env`` resolved to, e.g. ``/dev/ttyACM0``."""
+        return self.uri.removeprefix("xi-com://")
