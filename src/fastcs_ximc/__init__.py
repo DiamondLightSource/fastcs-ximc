@@ -8,7 +8,7 @@
 
 from ._version import __version__
 from .config import XimcConnectionSettings, XimcOptions
-from .connection import XimcConnection
+from .connections import XimcConnection, XimcDRAConnection
 from .controller import MotionInhibitedError, XimcController
 from .utils import DeviceNotFoundError, enumerate_device_uris, patch_strict_flags
 
@@ -17,6 +17,7 @@ __all__ = [
     "MotionInhibitedError",
     "XimcConnection",
     "XimcConnectionSettings",
+    "XimcDRAConnection",
     "XimcController",
     "XimcOptions",
     "__version__",

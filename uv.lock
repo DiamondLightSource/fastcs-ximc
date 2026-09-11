@@ -514,8 +514,8 @@ wheels = [
 
 [[package]]
 name = "fastcs"
-version = "0.14.2.dev50+g8cdee5187"
-source = { git = "https://github.com/DiamondLightSource/fastcs.git?branch=refactor-issue-422#8cdee518727a33af22a4ab177b9bb18b59609d34" }
+version = "0.14.2.dev51+g0f62b58cc"
+source = { git = "https://github.com/DiamondLightSource/fastcs.git?branch=connections-dra-mixin#0f62b58cc9698eedf85a43532b9268ec310ee449" }
 dependencies = [
     { name = "aioserial" },
     { name = "fastapi", extra = ["standard"] },
@@ -557,7 +557,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastcs", git = "https://github.com/DiamondLightSource/fastcs.git?branch=refactor-issue-422" },
+    { name = "fastcs", git = "https://github.com/DiamondLightSource/fastcs.git?branch=connections-dra-mixin" },
     { name = "libximc", specifier = "==3.0.2" },
     { name = "p4p", specifier = ">=4.2.1" },
     { name = "pvi", specifier = ">=0.13.1" },

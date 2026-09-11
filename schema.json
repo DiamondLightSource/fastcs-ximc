@@ -295,7 +295,21 @@
         },
         "connections": {
           "additionalProperties": {
-            "$ref": "#/$defs/XimcConnectionConfig"
+            "discriminator": {
+              "mapping": {
+                "fastcs_ximc.XimcConnection": "#/$defs/XimcConnectionConfig",
+                "fastcs_ximc.XimcDRAConnection": "#/$defs/XimcDRAConnectionConfig"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/XimcConnectionConfig"
+              },
+              {
+                "$ref": "#/$defs/XimcDRAConnectionConfig"
+              }
+            ]
           },
           "title": "Connections",
           "type": "object"
@@ -311,6 +325,63 @@
         "type"
       ],
       "title": "XimcControllerEntry",
+      "type": "object"
+    },
+    "XimcDRAConnectionConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "fastcs_ximc.XimcDRAConnection",
+          "title": "Type",
+          "type": "string"
+        },
+        "depends_on": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Depends On"
+        },
+        "settings": {
+          "$ref": "#/$defs/XimcConnectionSettings"
+        },
+        "reconnect_period": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reconnect Period"
+        },
+        "reconnect_attempts": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reconnect Attempts"
+        }
+      },
+      "required": [
+        "type",
+        "settings"
+      ],
+      "title": "XimcDRAConnectionConfig",
       "type": "object"
     }
   },

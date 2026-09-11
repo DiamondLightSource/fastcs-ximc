@@ -50,11 +50,12 @@ GitHub = "https://github.com/DiamondLightSource/fastcs-ximc"
 email = "thomas.kane@diamond.ac.uk"
 name = "Thomas Kane"
 
-# Temporary: track the fastcs refactor branch until it is released.
+# Temporary: track the fastcs refactor branch until it is released. This is
+# connections-dra-mixin, which is refactor-issue-422 plus `DRADeviceMixin`.
 # uv-only metadata - it is not carried in the built wheel, so a published
 # fastcs-ximc still resolves fastcs from PyPI. Remove this and re-pin when merged.
 [tool.uv.sources]
-fastcs = { git = "https://github.com/DiamondLightSource/fastcs.git", branch = "refactor-issue-422" }
+fastcs = { git = "https://github.com/DiamondLightSource/fastcs.git", branch = "connections-dra-mixin" }
 
 [tool.setuptools_scm]
 version_file = "src/fastcs_ximc/_version.py"

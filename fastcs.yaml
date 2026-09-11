@@ -17,6 +17,24 @@ controllers:
           ### OR Name of an environment variable holding the serial device path
           # port_env: TEST_AXIS_PORT
 
+  # A second axis, on a node injected by a Kubernetes DRA claim. Role names are
+  # local to an entry, so this one claims `motor` too and gets its own device.
+  # Comment this entry out to run against the simulator alone.
+  - id: TEST-AXIS-2
+    type: fastcs_ximc.XimcController
+    poll_period: 0.5
+
+    connections:
+      motor:
+        type: fastcs_ximc.XimcDRAConnection
+        settings:
+          port: /dev/ttyACM0
+
+        # A claimed node does not come back by itself, so give up sooner than
+        # the default 10 attempts a second.
+        reconnect_period: 5.0
+        reconnect_attempts: 3
+
 transport:
   - epicsca: {}
     gui:

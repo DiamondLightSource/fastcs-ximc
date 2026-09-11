@@ -30,7 +30,15 @@ controllers:
 | `poll_period` | entry | `0.2` | Seconds between reads of the device |
 
 Exactly one of `uri`, `port` or `port_env` must be given. The connection also
-takes FastCS's `reconnect_period` and `reconnect_attempts`.
+takes FastCS's `reconnect_period` and `reconnect_attempts`, alongside
+`settings:` rather than inside it.
+
+`type:` picks the connection class:
+
+| Class | Use |
+|---|---|
+| `fastcs_ximc.XimcConnection` | A libximc device on a node that is always there |
+| `fastcs_ximc.XimcDRAConnection` | The same, on a node injected by a Kubernetes DRA claim - a node that has gone will not reappear in the pod, so a missing one is terminal rather than something to retry |
 
 ### URI schemes
 
@@ -321,7 +329,8 @@ the `ControllerRunner`'s job. It offers `read`, `read_struct`, `write` and
 `command` - naming the libximc call rather than handing out the handle - and
 every one of them is a blocking ctypes call over a serial link, so they are
 dispatched to a worker thread behind a lock; the handle is not safe for
-concurrent use.
+concurrent use. `XimcDRAConnection` adds nothing but where its device node is:
+FastCS's `DRADeviceMixin` supplies the rest.
 
 **Only a dead link marks the connection down.** libximc raises `ConnectionError`
 when the device must be reopened and `ValueError` when it rejects a parameter,

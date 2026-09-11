@@ -1,4 +1,4 @@
-"""A libximc device handle as a FastCS `Connection`."""
+"""The libximc device handle as FastCS `Connection` s."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from typing import Any
 
 import libximc.highlevel as ximc
 from fastcs.connections import Connection
+from fastcs.connections.dra import DRADeviceMixin
 from fastcs.logging import logger
 
 from .config import XimcConnectionSettings
@@ -19,12 +20,9 @@ READ_ONLY_GROUPS = ("position", "status", "device_information")
 class XimcConnection(Connection):
     """Serialised, non-blocking access to one libximc ``Axis``.
 
-    Every libximc call is a blocking ctypes call over a serial link, so calls
-    are dispatched to a worker thread. The device handle is not safe for
-    concurrent use, so a lock serialises them.
-
-    Opening, reopening and closing it are the runner's job, so there is no
-    reconnect logic here - only the report that the link has gone.
+    libximc calls block, and the handle is not safe for concurrent use, so they
+    go to a worker thread one at a time. Opening and reopening it is the
+    runner's job.
     """
 
     def __init__(self, settings: XimcConnectionSettings, **kwargs) -> None:
@@ -107,3 +105,15 @@ class XimcConnection(Connection):
             # be reopened, and ValueError when it rejects a parameter.
             self.set_disconnected()
             raise
+
+
+class XimcDRAConnection(DRADeviceMixin, XimcConnection):
+    """A XIMC device whose node comes from a Kubernetes DRA claim.
+
+    The device node will not reappear in this pod once it has gone, so the
+    mixin makes a missing one terminal rather than something to retry.
+    """
+
+    @property
+    def _node_path(self) -> str:
+        return self._settings.port or self.uri

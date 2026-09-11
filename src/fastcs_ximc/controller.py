@@ -13,7 +13,7 @@ from fastcs.logging import logger
 from fastcs.methods import command
 
 from .config import XimcOptions
-from .connection import XimcConnection
+from .connections import XimcConnection
 
 TENTHS_OF_DEGREE = 10.0  # raw device units per engineering unit
 STEPS = "steps"
