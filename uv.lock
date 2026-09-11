@@ -563,7 +563,7 @@ requires-dist = [
     { name = "pvi", specifier = ">=0.13.1" },
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
-    { name = "softioc", specifier = "==4.7.1" },
+    { name = "softioc", specifier = "==4.7.2" },
     { name = "stdio-socket", specifier = ">=1.3.1" },
     { name = "typer", specifier = ">=0.20.0" },
 ]
@@ -1972,7 +1972,7 @@ wheels = [
 
 [[package]]
 name = "softioc"
-version = "4.7.1"
+version = "4.7.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "epicscorelibs" },
@@ -1982,17 +1982,20 @@ dependencies = [
     { name = "pvxslibs" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/05/9e/cd0508d816d2706170fd82723d859f030671a593be21bf3e500ae58d8530/softioc-4.7.1.tar.gz", hash = "sha256:305276a0ad57eea4afd21c44abc280cb2a5747297347ea8dca31b9b48e831e8e", size = 94170, upload-time = "2026-07-23T09:53:46.637Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/71/98/15e812e8b6345a2fa305d5d08b7ec8f3545ef815b9e10d1d00e39175516f/softioc-4.7.2.tar.gz", hash = "sha256:993ef8f6b81f0908baa4403422068334757057f006a61f554c450755c9ebf0c6", size = 94258, upload-time = "2026-09-11T11:27:47.365Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/4e/f42c01cd4d1d7f447c9311928caf4d0b40625832e4ddb01d8a6204758754/softioc-4.7.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:f111d7d1aba14e59f7b16c419c33c63e77c67c1a32cc018e187687d5954b010d", size = 119316, upload-time = "2026-07-23T09:53:27.375Z" },
-    { url = "https://files.pythonhosted.org/packages/b0/ae/b4c6005e4c8b31dba22c63ed604c1528828429eab62027daa3554b651e4d/softioc-4.7.1-cp311-cp311-manylinux2014_x86_64.whl", hash = "sha256:2e53b9bfa3648f2b428dfb6b88dce20a7862e73d1ad5b0692dc53a73db232f7b", size = 125021, upload-time = "2026-07-23T09:53:28.433Z" },
-    { url = "https://files.pythonhosted.org/packages/9c/ef/83b80ede1104d7de171df8de1c279d4668aeff57963bb2de58dd02a15b8b/softioc-4.7.1-cp311-cp311-win_amd64.whl", hash = "sha256:d76697e722badebe5d7832f612b4b57b9800d711e203dd7202db9e911987410e", size = 118657, upload-time = "2026-07-23T09:53:29.378Z" },
-    { url = "https://files.pythonhosted.org/packages/76/08/0e6d19587a287e86d45499c9156574d3880732d8b0875734ea52c240bae3/softioc-4.7.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:4320b40e84fcd21de7dacd8c71463cc62a23dbdae4aebe985a7a71c9a6d44812", size = 119392, upload-time = "2026-07-23T09:53:30.499Z" },
-    { url = "https://files.pythonhosted.org/packages/46/d1/009d22214f3ae54016fcd2bf7fc50a7d9e6299e540e7672c5daca7d34471/softioc-4.7.1-cp312-cp312-manylinux2014_x86_64.whl", hash = "sha256:1332ddad892d4864b01d4f0ec7941922cff7281869587ed113834296a8332e65", size = 125044, upload-time = "2026-07-23T09:53:31.517Z" },
-    { url = "https://files.pythonhosted.org/packages/80/94/34c6d8abcc809b4345185d5a1bd12c82382b2c88ee81464c3b8a61cee5de/softioc-4.7.1-cp312-cp312-win_amd64.whl", hash = "sha256:a30c0b4ed588caeb434d53daae8a910d74e5a44040e951128db6c3b10fc7f7e8", size = 118655, upload-time = "2026-07-23T09:53:32.645Z" },
-    { url = "https://files.pythonhosted.org/packages/bf/7a/37f7b5018a6f7064a59e564068cdd0207f338668ea11abbb5db5ea2c5851/softioc-4.7.1-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:7f072f2d06062acbc3fa21084a87feb44365db2f3cc5d0e055f48d9f0f6312b5", size = 119369, upload-time = "2026-07-23T09:53:33.791Z" },
-    { url = "https://files.pythonhosted.org/packages/ed/74/a9a3924ea6047c18ee8f6cc3035bafbce5239badc42acc311e8e9ca3a065/softioc-4.7.1-cp313-cp313-manylinux2014_x86_64.whl", hash = "sha256:7e130eaf43aac11b095dd1212c42c3bd0760a99dd9da7bf669d70590a0f4ee75", size = 125036, upload-time = "2026-07-23T09:53:35.962Z" },
-    { url = "https://files.pythonhosted.org/packages/5e/b3/bb8e7f548f93505a76c192f58d9eb007fc54e44a523ad25e9bbdaba50fd2/softioc-4.7.1-cp313-cp313-win_amd64.whl", hash = "sha256:41ece01363f365e17360e6f9bb112e4ff0dd3dc0cfe3cda937286f46bbe2fea9", size = 118658, upload-time = "2026-07-23T09:53:36.922Z" },
+    { url = "https://files.pythonhosted.org/packages/49/b0/cf1a69acff090f6034804ba945c1645cb3de27726e946a4326901e24ecd6/softioc-4.7.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:95f587d42b1e73fb823b9eadc1b2f0a91f314a2493b6eb45c549ce8613837b72", size = 119316, upload-time = "2026-09-11T11:27:28.343Z" },
+    { url = "https://files.pythonhosted.org/packages/34/1e/4670dbf11a23807877c76f966835860416a4461743a87e3097384065359b/softioc-4.7.2-cp311-cp311-manylinux2014_x86_64.whl", hash = "sha256:64cde2e63a11dec42fef779a3184fa0aec89c6f4c3096b37245ee5c82dbd4813", size = 125013, upload-time = "2026-09-11T11:27:29.193Z" },
+    { url = "https://files.pythonhosted.org/packages/5f/89/adcc47447aca20f85f3acca3604827d6dae83fef8a1990cf9f81c74bbff4/softioc-4.7.2-cp311-cp311-win_amd64.whl", hash = "sha256:b88058cb273d88aa5e6b767fa35e5e00a50a28feaec60bf8ae494322d572e13b", size = 118670, upload-time = "2026-09-11T11:27:30.177Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/79/ac63645d0777bbd61d77e7c38367cafacc5600cc5e7af9ddae82e5117e88/softioc-4.7.2-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:0ee2f22f915f68a61530376ead58d1621a290eae23a5316fc39b23ccfa24cbe5", size = 119378, upload-time = "2026-09-11T11:27:31.331Z" },
+    { url = "https://files.pythonhosted.org/packages/19/19/ccd147090d2ed8f45d00e6532c402123038d1129aee734319254724806dc/softioc-4.7.2-cp312-cp312-manylinux2014_x86_64.whl", hash = "sha256:d156345d83aea327a41aad7a88a1e51cde02add8a2d88f802ca6dce31967c67a", size = 125038, upload-time = "2026-09-11T11:27:32.216Z" },
+    { url = "https://files.pythonhosted.org/packages/76/40/cc85c9daf13dfce03d9f19011e26ad37149f11c1cae0e5abffbc2b48c80b/softioc-4.7.2-cp312-cp312-win_amd64.whl", hash = "sha256:97c8d1b33b32a960b27c1730fc5a5d03c6cd4788f09563c293a455057def2a8f", size = 118671, upload-time = "2026-09-11T11:27:33.05Z" },
+    { url = "https://files.pythonhosted.org/packages/8b/a7/2e760be9f0de3e67b227179a577aa08b3feed5d889667de18e209d8f1c44/softioc-4.7.2-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:e24d71331371b10f619c191c67d862751deba5274c436b00dd6e4c7be3f70aff", size = 119365, upload-time = "2026-09-11T11:27:34.124Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/15/726bc9785fb40b6ec90c326d67e4e3ee8219c4bbc3363c3301238f233a32/softioc-4.7.2-cp313-cp313-manylinux2014_x86_64.whl", hash = "sha256:22614d21cd6b40eb36b16581a42ca248b546b00c8de14d0189858de9f0678b04", size = 125029, upload-time = "2026-09-11T11:27:34.964Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/58/18f6e3c0f86d83f8a61cb6a2334ce75b658e1ab0d0e983c6840c7ca1cbbb/softioc-4.7.2-cp313-cp313-win_amd64.whl", hash = "sha256:14006ac1240cf11eb8e18491bea3b7d1b5a5ef786cd24da6561c8ecadabb61c4", size = 118673, upload-time = "2026-09-11T11:27:35.853Z" },
+    { url = "https://files.pythonhosted.org/packages/d3/e8/dacb401d4e1637a37c35ddfbd2aad29cefdf3d569f1ed8b5dfb9b0953417/softioc-4.7.2-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:4090a25a1f43e91ffbfac433fd770343e587f660a1970f9aee10340341a496c5", size = 119351, upload-time = "2026-09-11T11:27:36.75Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/cb/435623ee70aa9fee0353f0a4425eadb807bdefd4cef89d6cdc52675009a4/softioc-4.7.2-cp314-cp314-manylinux2014_x86_64.whl", hash = "sha256:9dbee9ead4f25b9abc55545d1ba75fd0231b379afe4f594376cb3a91bdf510ea", size = 124984, upload-time = "2026-09-11T11:27:37.755Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/33/f05bb6f363680b44374bdc10545130155a0603138a6c5d977c7717eaab74/softioc-4.7.2-cp314-cp314-win_amd64.whl", hash = "sha256:9c6c3bc10642e1750ded116bc4fb077375d76083eef58f1cbbeb2b9f4e084dee", size = 119252, upload-time = "2026-09-11T11:27:38.893Z" },
 ]
 
 [[package]]
