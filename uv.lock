@@ -570,7 +570,7 @@ requires-dist = [
     { name = "fastcs", git = "https://github.com/DiamondLightSource/fastcs.git?branch=allow-colons-in-pv" },
     { name = "libximc", specifier = "==3.0.2" },
     { name = "p4p", specifier = ">=4.2.1" },
-    { name = "pvi", specifier = ">=0.13.1" },
+    { name = "pvi", specifier = "~=0.14.4" },
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "softioc", specifier = "==4.7.1" },
@@ -1374,7 +1374,7 @@ wheels = [
 
 [[package]]
 name = "pvi"
-version = "0.14.3"
+version = "0.14.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
@@ -1384,9 +1384,9 @@ dependencies = [
     { name = "ruamel-yaml" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/21/a9/22a90d9d8027a0a8f775d070d55bdd92a0e5d900ecf8a333a0bca78829ad/pvi-0.14.3.tar.gz", hash = "sha256:265196005d4742b738f7968b588a42efc38c3c7e76ab3ea3fb8cfe59bbdd4e63", size = 289393, upload-time = "2026-09-25T14:49:43.313Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0a/af/a5b4fa5210fbd072e70eaf9d5b8ccaf6a7e61b293e444331cf85423d6bde/pvi-0.14.4.tar.gz", hash = "sha256:745e3a084afb6cb0c557518399063e9992bf7b3e925f1f9e6dd97bf34d46aaf4", size = 289308, upload-time = "2026-09-30T13:02:43.76Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d7/13/4e511bcf4747dfa0172cd5e9d69748f63cb98f50f88e011c53ab17120381/pvi-0.14.3-py3-none-any.whl", hash = "sha256:c130c8adaa09a174ec1335028673e0affe81978e56dbd3ac42cfc3471f57c43b", size = 59776, upload-time = "2026-09-25T14:49:42.392Z" },
+    { url = "https://files.pythonhosted.org/packages/b2/03/3e38dd5a7a5618f8dfa8cdd08f414bc915d6bae79f495d19bd97d570d199/pvi-0.14.4-py3-none-any.whl", hash = "sha256:0ead53921df2216bc5bee6f31aba483f33a9bd64a49bf59dbb2e324a67e365a1", size = 59818, upload-time = "2026-09-30T13:02:42.626Z" },
 ]
 
 [[package]]
