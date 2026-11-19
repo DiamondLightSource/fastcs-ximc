@@ -1,12 +1,11 @@
 [build-system]
-requires = ["setuptools>=64", "setuptools_scm[toml]>=8"]
+requires = ["setuptools>=77.0.3", "setuptools_scm[toml]>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastcs-ximc"
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -25,7 +24,8 @@ dependencies = [
     "typer>=0.20.0",
 ] # Add project dependencies here, e.g. ["click", "numpy"]
 dynamic = ["version"]
-license.file = "LICENSE"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.11"
 
@@ -36,7 +36,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
-    "tox-uv",
+    "tox-uv-bare",
     "types-mock",
 ]
 
@@ -50,11 +50,17 @@ GitHub = "https://github.com/DiamondLightSource/fastcs-ximc"
 email = "thomas.kane@diamond.ac.uk"
 name = "Thomas Kane"
 
+<<<<<<< before updating
 # Temporary: track the fastcs allow-colons-in-pv branch until it is released.
 # uv-only metadata - it is not carried in the built wheel, so a published
 # fastcs-ximc still resolves fastcs from PyPI. Remove this and re-pin when merged.
 [tool.uv.sources]
 fastcs = { git = "https://github.com/DiamondLightSource/fastcs.git", branch = "allow-colons-in-pv" }
+=======
+[tool.uv]
+# Minimum uv to fix eMudhra CA cert incident (see discuss.python.org/t/109576)
+required-version = ">=0.13.5"
+>>>>>>> after updating
 
 [tool.setuptools_scm]
 version_file = "src/fastcs_ximc/_version.py"
@@ -95,6 +101,11 @@ env_list = ["pre-commit", "type-checking", "tests"]
 [tool.tox.env_run_base]
 # Pass all environment variables to the test environments
 passenv = ["*"]
+allowlist_externals = [
+    "pyright",
+    "pytest",
+    "pre-commit",
+]
 
 [tool.tox.env.pre-commit]
 description = "Run pre-commit on all files"
