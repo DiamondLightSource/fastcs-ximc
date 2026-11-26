@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import Any, SupportsInt
 
 import libximc.highlevel as ximc
@@ -8,13 +7,14 @@ from fastcs import ONCE
 from fastcs.attributes import AttrR, AttrRW, AttrW
 from fastcs.controllers import Controller
 from fastcs.datatypes import Bool, Float, Int, String
+from fastcs.logging import logger as _logger
 from fastcs.methods import command
 
 from .config import XimcOptions
 from .device import XimcDevice
 from .io import XimcSettingsIO, XimcSettingsIORef
 
-logger = logging.getLogger(__name__)
+logger = _logger.bind(logger_name=__name__)
 
 # Raw device units per engineering unit, for scaled attributes
 TENTHS_OF_DEGREE = 10.0
@@ -596,8 +596,10 @@ class XimcController(Controller):
 
         try:
             await self._device.close()
-        except Exception:
-            logger.warning("Ignoring failure to close a stale handle for %s", self.path)
+        except Exception as e:
+            logger.warning(
+                "Ignoring failure to close a stale handle", path=self.path, error=str(e)
+            )
 
         await self._device.open()
 
@@ -650,12 +652,12 @@ class XimcController(Controller):
 
     async def _move_absolute(self, value: int) -> None:
         self._check_motion_allowed()
-        logger.info("Moving %s to absolute position %d", self.path, value)
+        logger.info("Moving", path=self.path, position=value)
         await self._device.call(lambda axis: axis.command_move(value, 0))
 
     async def _move_relative(self, value: int) -> None:
         self._check_motion_allowed()
-        logger.info("Moving %s by %d steps", self.path, value)
+        logger.info("Moving relative", path=self.path, steps=value)
         await self._device.call(lambda axis: axis.command_movr(value, 0))
 
     async def _put_position_demand(self, attr: AttrW[int, Any], value: int) -> None:
@@ -711,7 +713,7 @@ class XimcController(Controller):
     async def mark_position(self) -> None:
         """Mark the current position."""
         position = int(await self._device.read_field("position", "Position"))
-        logger.info("Marking position %d for %s", position, self.path)
+        logger.info("Marking position", path=self.path, position=position)
         await self.marked_position.put(position, sync_setpoint=True)
 
     @command(group="Position")

@@ -5,6 +5,7 @@ from pathlib import Path
 
 import libximc.highlevel as ximc
 import pytest
+from fastcs.logging import logger
 
 from fastcs_ximc import (
     MotionInhibitedError,
@@ -477,6 +478,19 @@ class TestLifecycle:
 
         with pytest.raises(Exception, match="ttyACM0"):
             await controller.connect()
+
+    async def test_logs_reach_the_fastcs_logger(self, options):
+        records = []
+        sink = logger.add(lambda m: records.append(m.record))
+        controller = XimcController(options)
+        try:
+            await controller.connect()
+            await controller.disconnect()
+        finally:
+            logger.remove(sink)
+
+        opened = [r for r in records if r["message"] == "Opened device"]
+        assert opened[0]["extra"]["uri"] == options.device_uri
 
     async def test_disconnect_closes_the_device(self, options):
         controller = XimcController(options)

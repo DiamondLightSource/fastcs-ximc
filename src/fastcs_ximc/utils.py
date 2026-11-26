@@ -1,10 +1,10 @@
 import enum
-import logging
 from pathlib import Path
 
 import libximc.highlevel as ximc
+from fastcs.logging import logger as _logger
 
-logger = logging.getLogger(__name__)
+logger = _logger.bind(logger_name=__name__)
 
 
 class DeviceNotFoundError(Exception):
@@ -36,7 +36,7 @@ def patch_strict_flags() -> list[str]:
     for flag_class in flag_classes:
         set_flag_boundary(flag_class, enum.FlagBoundary.CONFORM)
 
-    logger.debug("Patched %d libximc flag enums to CONFORM", len(flag_classes))
+    logger.debug("Patched libximc flag enums", count=len(flag_classes))
     return [flag_class.__name__ for flag_class in flag_classes]
 
 
@@ -44,7 +44,7 @@ def enumerate_device_uris() -> list[str]:
     """List the URIs of all libximc devices attached to this machine."""
     devices = ximc.enumerate_devices(ximc.EnumerateFlags.ENUMERATE_ALL_COM)
     uris = [device["uri"] for device in devices]
-    logger.debug("Enumerated device URIs: %s", uris)
+    logger.debug("Enumerated devices", uris=uris)
     return uris
 
 
@@ -64,4 +64,4 @@ def prepare_virtual_device(uri: str) -> None:
 
     path = Path(uri.removeprefix("xi-emu://"))
     path.parent.mkdir(parents=True, exist_ok=True)
-    logger.info("Prepared virtual device state file at %s", path)
+    logger.debug("Prepared virtual device directory", path=str(path.parent))
