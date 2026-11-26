@@ -1,12 +1,86 @@
 {
   "$defs": {
+    "CommandAlias": {
+      "additionalProperties": false,
+      "description": "Enum alias PV for a command, which is called on labels mapped to True.\n\nMultiple commands can share an alias PV if their labels match.",
+      "properties": {
+        "pv": {
+          "title": "Pv",
+          "type": "string"
+        },
+        "triggers": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "title": "Triggers",
+          "type": "object"
+        }
+      },
+      "required": [
+        "pv",
+        "triggers"
+      ],
+      "title": "CommandAlias",
+      "type": "object"
+    },
+    "EnumMapping": {
+      "additionalProperties": false,
+      "properties": {
+        "pv": {
+          "title": "Pv",
+          "type": "string"
+        },
+        "mapping": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Mapping",
+          "type": "object"
+        }
+      },
+      "required": [
+        "pv",
+        "mapping"
+      ],
+      "title": "EnumMapping",
+      "type": "object"
+    },
     "EpicsCAOptions": {
       "additionalProperties": false,
       "description": "Channel-Access-specific options.\n\nCurrently empty: present so ``epicsca:`` survives in fastcs.yaml as the\ntransport discriminator key. Reserved for future CA-specific knobs.",
       "properties": {
         "aliases": {
           "additionalProperties": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/$defs/EnumMapping"
+              },
+              {
+                "$ref": "#/$defs/CommandAlias"
+              }
+            ]
           },
           "title": "Aliases",
           "type": "object"
@@ -107,46 +181,6 @@
         }
       },
       "title": "EpicsGUIOptions",
-      "type": "object"
-    },
-    "EpicsPVAOptions": {
-      "additionalProperties": false,
-      "description": "PVAccess-specific options.\n\nCurrently empty: present so ``epicspva:`` survives in fastcs.yaml as the\ntransport discriminator key. Reserved for future PVA-specific knobs.",
-      "properties": {},
-      "title": "EpicsPVAOptions",
-      "type": "object"
-    },
-    "EpicsPVATransport": {
-      "additionalProperties": false,
-      "description": "PV access transport.",
-      "properties": {
-        "epicspva": {
-          "$ref": "#/$defs/EpicsPVAOptions"
-        },
-        "docs": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/EpicsDocsOptions"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "gui": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/EpicsGUIOptions"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        }
-      },
-      "title": "EpicsPVATransport",
       "type": "object"
     },
     "RestServerOptions": {
@@ -257,9 +291,6 @@
         "anyOf": [
           {
             "$ref": "#/$defs/EpicsCATransport"
-          },
-          {
-            "$ref": "#/$defs/EpicsPVATransport"
           },
           {
             "$ref": "#/$defs/RestTransport"
