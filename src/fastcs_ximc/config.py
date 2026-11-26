@@ -1,21 +1,12 @@
-"""Configuration models for a XIMC controller."""
-
 import os
-from typing import Literal
 
 from pydantic import BaseModel, model_validator
 
 XIMC_URI_SCHEMES = ("xi-com://", "xi-net://", "xi-udp://", "xi-emu://")
-"""Device URI schemes understood by libximc."""
 
 
 class XimcOptions(BaseModel):
-    """Options for a single libximc device.
-
-    A device is addressed by a full libximc URI. ``port``/``port_env`` are
-    convenience shorthands that expand to a ``xi-com://`` URI for the common
-    case of a directly attached serial controller.
-    """
+    """Options for a single libximc device, addressed by uri, port or port_env."""
 
     uri: str | None = None
     """Full libximc URI, e.g. ``xi-com:///dev/ttyACM0`` or ``xi-emu:///tmp/dev.bin``."""
@@ -58,16 +49,6 @@ class XimcOptions(BaseModel):
         """The resolved libximc URI."""
         assert self.uri is not None, "URI not resolved - validation did not run"
         return self.uri
-
-    @property
-    def scheme(self) -> Literal["xi-com", "xi-net", "xi-udp", "xi-emu"]:
-        """The URI scheme, e.g. ``xi-emu`` for a virtual device."""
-        return self.device_uri.split("://", 1)[0]  # type: ignore[return-value]
-
-    @property
-    def is_virtual(self) -> bool:
-        """Whether this URI addresses a libximc virtual (emulated) device."""
-        return self.scheme == "xi-emu"
 
 
 def _port_from_environment(name: str) -> str:

@@ -1,23 +1,20 @@
-"""FastCS controller for a single libximc motion controller."""
-
 from __future__ import annotations
 
-import enum
-import logging
-from typing import Any
+from typing import Any, SupportsInt
 
 import libximc.highlevel as ximc
 from fastcs import ONCE
 from fastcs.attributes import AttrR, AttrRW, AttrW
 from fastcs.controllers import Controller
 from fastcs.datatypes import Bool, Float, Int, String
+from fastcs.logging import logger as _logger
 from fastcs.methods import command
 
 from .config import XimcOptions
 from .device import XimcDevice
 from .io import XimcSettingsIO, XimcSettingsIORef
 
-logger = logging.getLogger(__name__)
+logger = _logger.bind(logger_name=__name__)
 
 # Raw device units per engineering unit, for scaled attributes
 TENTHS_OF_DEGREE = 10.0
@@ -33,22 +30,7 @@ class MotionInhibitedError(RuntimeError):
 
 
 class XimcController(Controller):
-    """A single motion controller driven through the libximc library.
-
-    Exposes the position, motion, status and engine settings that every libximc
-    device supports. The device is addressed by a full libximc URI, so real
-    (``xi-com://``, ``xi-net://``, ``xi-udp://``) and virtual (``xi-emu://``)
-    devices are driven identically.
-
-    libximc calls the two directions "left" and "right"; since a stage may be
-    vertical or rotary, they are named after the position count instead -
-    forward and high for increasing steps, reverse and low for decreasing.
-
-    Attributes with an ``io_ref`` are backed by a libximc struct field. The rest
-    are soft attributes held only in software - the ``Units`` group, the marked
-    position, the tweak step and the motion inhibit - and are writable so that a
-    control system autosave layer can restore them across a restart.
-    """
+    """One libximc axis; directions are named forward/reverse after the step count."""
 
     def __init__(self, options: XimcOptions) -> None:
         self._options = options
@@ -614,8 +596,10 @@ class XimcController(Controller):
 
         try:
             await self._device.close()
-        except Exception:
-            logger.warning("Ignoring failure to close a stale handle for %s", self.path)
+        except Exception as e:
+            logger.warning(
+                "Ignoring failure to close a stale handle", path=self.path, error=str(e)
+            )
 
         await self._device.open()
 
@@ -668,12 +652,12 @@ class XimcController(Controller):
 
     async def _move_absolute(self, value: int) -> None:
         self._check_motion_allowed()
-        logger.info("Moving %s to absolute position %d", self.path, value)
+        logger.info("Moving", path=self.path, position=value)
         await self._device.call(lambda axis: axis.command_move(value, 0))
 
     async def _move_relative(self, value: int) -> None:
         self._check_motion_allowed()
-        logger.info("Moving %s by %d steps", self.path, value)
+        logger.info("Moving relative", path=self.path, steps=value)
         await self._device.call(lambda axis: axis.command_movr(value, 0))
 
     async def _put_position_demand(self, attr: AttrW[int, Any], value: int) -> None:
@@ -729,7 +713,7 @@ class XimcController(Controller):
     async def mark_position(self) -> None:
         """Mark the current position."""
         position = int(await self._device.read_field("position", "Position"))
-        logger.info("Marking position %d for %s", position, self.path)
+        logger.info("Marking position", path=self.path, position=position)
         await self.marked_position.put(position, sync_setpoint=True)
 
     @command(group="Position")
@@ -786,24 +770,13 @@ def _ref(
     update_period: float | None,
     *,
     scale: float = 1.0,
-    bit: int | enum.Flag | None = None,
+    bit: SupportsInt | None = None,
 ) -> XimcSettingsIORef:
     """Shorthand for a `XimcSettingsIORef`, accepting libximc flag members."""
     return XimcSettingsIORef(
         group,
         field,
         scale=scale,
-        bit=_bit_mask(bit),
+        bit=None if bit is None else int(bit),
         update_period=update_period,
     )
-
-
-def _bit_mask(bit: int | enum.Flag | None) -> int | None:
-    """Reduce a libximc flag member to its raw mask.
-
-    libximc's flags derive from a ``StrictIntFlag`` that is not an ``int``
-    subclass, so the underlying value has to be taken explicitly.
-    """
-    if bit is None or isinstance(bit, int):
-        return bit
-    return int(bit.value)

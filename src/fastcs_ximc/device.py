@@ -1,28 +1,21 @@
-"""Async wrapper around a single libximc device handle."""
-
 from __future__ import annotations
 
 import asyncio
-import logging
 from collections.abc import Callable
 from typing import Any, TypeVar
 
 import libximc.highlevel as ximc
+from fastcs.logging import logger as _logger
 
 from .utils import check_device_present, patch_strict_flags, prepare_virtual_device
 
-logger = logging.getLogger(__name__)
+logger = _logger.bind(logger_name=__name__)
 
 T = TypeVar("T")
 
 
 class XimcDevice:
-    """Serialised, non-blocking access to one libximc ``Axis``.
-
-    Every libximc call is a blocking ctypes call over a serial link, so calls
-    are dispatched to a worker thread. The device handle is not safe for
-    concurrent use, so a lock serialises them.
-    """
+    """One libximc ``Axis``, with its blocking calls serialised onto a thread."""
 
     def __init__(self, uri: str) -> None:
         self._uri = uri
@@ -59,7 +52,7 @@ class XimcDevice:
         axis = ximc.Axis(self._uri)
         await asyncio.to_thread(axis.open_device)
         self._axis = axis
-        logger.info("Opened libximc device at %s", self._uri)
+        logger.info("Opened device", uri=self._uri)
 
     async def close(self) -> None:
         """Close the device if it is open."""
@@ -68,15 +61,10 @@ class XimcDevice:
 
         axis, self._axis = self._axis, None
         await asyncio.to_thread(axis.close_device)
-        logger.info("Closed libximc device at %s", self._uri)
+        logger.info("Closed device", uri=self._uri)
 
     async def call(self, func: Callable[[ximc.Axis], T]) -> T:
-        """Run ``func`` against the device handle in a worker thread.
-
-        Usage::
-
-            position = await device.call(lambda axis: axis.get_position())
-        """
+        """Run ``func`` against the device handle in a worker thread."""
         async with self._lock:
             return await asyncio.to_thread(func, self.axis)
 
@@ -85,11 +73,7 @@ class XimcDevice:
         return await self.call(lambda axis: getattr(_get_struct(axis, group), field))
 
     async def write_field(self, group: str, field: str, value: Any) -> None:
-        """Read-modify-write one field of a settings struct.
-
-        libximc rejects a partially populated struct, so the whole struct must
-        be read back, mutated and written out again.
-        """
+        """Read-modify-write one field; libximc rejects a partial struct."""
 
         def _write(axis: ximc.Axis) -> None:
             struct = _get_struct(axis, group)

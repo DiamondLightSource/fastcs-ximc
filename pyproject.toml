@@ -13,17 +13,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 description = "FastCS support for XIMC motion controllers"
-dependencies = [
-    "fastcs~=0.14.3",
-    "libximc==3.0.2",
-    "p4p>=4.2.1",
-    "pvi~=0.14.4",
-    "pytest-asyncio>=1.3.0",
-    "python-dotenv>=1.2.1",
-    "softioc==4.7.1",
-    "stdio-socket>=1.3.1",
-    "typer>=0.20.0",
-] # Add project dependencies here, e.g. ["click", "numpy"]
+dependencies = ["fastcs[epicsca]~=0.14.5", "libximc==3.0.2"]
 dynamic = ["version"]
 license.file = "LICENSE"
 readme = "README.md"
@@ -34,6 +24,7 @@ dev = [
     "pre-commit",
     "pyright",
     "pytest",
+    "pytest-asyncio",
     "pytest-cov",
     "ruff",
     "tox-uv",
@@ -49,12 +40,6 @@ GitHub = "https://github.com/DiamondLightSource/fastcs-ximc"
 [[project.authors]] # Further authors may be added by duplicating this section
 email = "thomas.kane@diamond.ac.uk"
 name = "Thomas Kane"
-
-# Temporary: track the fastcs allow-colons-in-pv branch until it is released.
-# uv-only metadata - it is not carried in the built wheel, so a published
-# fastcs-ximc still resolves fastcs from PyPI. Remove this and re-pin when merged.
-[tool.uv.sources]
-fastcs = { git = "https://github.com/DiamondLightSource/fastcs.git", branch = "allow-colons-in-pv" }
 
 [tool.setuptools_scm]
 version_file = "src/fastcs_ximc/_version.py"
@@ -73,8 +58,6 @@ filterwarnings = [
     "error",
     # libximc sets ctypes _pack_ without _layout_ (still present in 3.0.4)
     "ignore:Due to '_pack_':DeprecationWarning:libximc.lowlevel._lowlevel",
-    # fastcs uses asyncio.iscoroutinefunction (still present in 0.14.2)
-    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:fastcs.methods.method",
 ]
 # Doctest python code in docs, python code in src docstrings, test functions in tests
 testpaths = "docs src tests"

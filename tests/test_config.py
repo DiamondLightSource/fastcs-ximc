@@ -5,10 +5,6 @@ from fastcs_ximc import XimcOptions
 
 
 class TestXimcOptions:
-    def test_uri_is_used_verbatim(self):
-        options = XimcOptions(uri="xi-com:///dev/ttyACM0")
-        assert options.device_uri == "xi-com:///dev/ttyACM0"
-
     def test_port_expands_to_com_uri(self):
         options = XimcOptions(port="/dev/ttyACM0")
         assert options.device_uri == "xi-com:///dev/ttyACM0"
@@ -47,10 +43,3 @@ class TestXimcOptions:
     )
     def test_all_libximc_schemes_accepted(self, uri):
         assert XimcOptions(uri=uri).device_uri == uri
-
-    def test_virtual_device_detected(self):
-        assert XimcOptions(uri="xi-emu:///tmp/axis.bin").is_virtual
-        assert not XimcOptions(port="/dev/ttyACM0").is_virtual
-
-    def test_scheme(self):
-        assert XimcOptions(uri="xi-net://192.168.0.1/1").scheme == "xi-net"

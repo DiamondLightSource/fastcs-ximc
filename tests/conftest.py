@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 
-from fastcs_ximc import XimcController, XimcDevice, XimcOptions
+from fastcs_ximc import XimcController, XimcOptions
 
 
 @pytest.fixture
@@ -21,15 +21,6 @@ def device_uri(tmp_path: Path) -> str:
 @pytest.fixture
 def options(device_uri: str) -> XimcOptions:
     return XimcOptions(uri=device_uri, poll_period=0.05)
-
-
-@pytest_asyncio.fixture
-async def device(device_uri: str):
-    """An open `XimcDevice` backed by a virtual device."""
-    device = XimcDevice(device_uri)
-    await device.open()
-    yield device
-    await device.close()
 
 
 @pytest_asyncio.fixture
