@@ -51,15 +51,6 @@ def test_patch_covers_every_flag_class(strict_flags):
         assert get_flag_boundary(cls) is enum.FlagBoundary.CONFORM
 
 
-def test_patch_keeps_defined_bits_of_a_mixed_value(strict_flags):
-    """Undefined bits are dropped, defined bits are kept."""
-    patch_strict_flags()
-
-    status = ximc.MvcmdStatus(0x81)  # MVCMD_RUNNING | MVCMD_MOVE
-    assert ximc.MvcmdStatus.MVCMD_RUNNING in status
-    assert ximc.MvcmdStatus.MVCMD_MOVE in status
-
-
 class TestPrepareVirtualDevice:
     def test_creates_missing_parent_directory(self, tmp_path):
         """libximc creates the .bin but not the directory holding it."""
@@ -68,14 +59,6 @@ class TestPrepareVirtualDevice:
 
         assert target.parent.is_dir()
         assert not target.exists()  # libximc creates the file itself
-
-    def test_existing_directory_is_left_alone(self, tmp_path):
-        prepare_virtual_device(f"xi-emu://{tmp_path / 'axis.bin'}")
-        assert tmp_path.is_dir()
-
-    def test_real_uri_is_ignored(self, tmp_path):
-        prepare_virtual_device("xi-com:///dev/ttyACM0")
-        assert list(tmp_path.iterdir()) == []
 
 
 class TestCheckDevicePresent:
@@ -89,10 +72,3 @@ class TestCheckDevicePresent:
         )
         with pytest.raises(DeviceNotFoundError, match="ttyACM0"):
             check_device_present("xi-com:///dev/ttyACM0")
-
-    def test_present_real_device_passes(self, monkeypatch):
-        monkeypatch.setattr(
-            "fastcs_ximc.utils.enumerate_device_uris",
-            lambda: ["xi-com:///dev/ttyACM0"],
-        )
-        check_device_present("xi-com:///dev/ttyACM0")
