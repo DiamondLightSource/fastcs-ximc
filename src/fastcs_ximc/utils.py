@@ -1,5 +1,3 @@
-"""Helpers for locating, preparing and talking to libximc devices."""
-
 import enum
 import logging
 from pathlib import Path
@@ -33,20 +31,7 @@ def set_flag_boundary(flag_class: type[enum.Flag], boundary: enum.FlagBoundary) 
 
 
 def patch_strict_flags() -> list[str]:
-    """Make every libximc ``Flag`` enum tolerate undefined bits.
-
-    libximc models each bitmask field as an ``enum.Flag`` with ``STRICT``
-    boundary, so a single undocumented bit reported by real hardware raises
-    ``ValueError`` and takes down the whole ``get_*_settings`` call. Switching
-    the boundary to ``CONFORM`` drops undefined bits instead of raising.
-
-    This is a workaround for an upstream libximc bug; if
-    ``test_flags_reject_unknown_bits_without_patch`` starts failing, it has
-    been fixed upstream and this can be removed.
-
-    Returns:
-        The names of the flag classes that were patched.
-    """
+    """Make libximc ``Flag`` enums drop undocumented hardware bits, not raise."""
     flag_classes = libximc_flag_classes()
     for flag_class in flag_classes:
         set_flag_boundary(flag_class, enum.FlagBoundary.CONFORM)
@@ -64,11 +49,7 @@ def enumerate_device_uris() -> list[str]:
 
 
 def check_device_present(uri: str) -> None:
-    """Raise `DeviceNotFoundError` if ``uri`` is not attached to this machine.
-
-    Only real devices can be enumerated, so virtual (``xi-emu://``) URIs are
-    accepted without checking.
-    """
+    """Raise `DeviceNotFoundError` if a real (not ``xi-emu://``) ``uri`` is absent."""
     if uri.startswith("xi-emu://"):
         return
 
@@ -77,12 +58,7 @@ def check_device_present(uri: str) -> None:
 
 
 def prepare_virtual_device(uri: str) -> None:
-    """Ensure a ``xi-emu://`` URI can be opened.
-
-    libximc creates the backing ``.bin`` file with default settings if it is
-    missing, but will not create its parent directory. Anything other than a
-    ``xi-emu://`` URI is left alone.
-    """
+    """Create the parent directory of a ``xi-emu://`` file; libximc won't."""
     if not uri.startswith("xi-emu://"):
         return
 

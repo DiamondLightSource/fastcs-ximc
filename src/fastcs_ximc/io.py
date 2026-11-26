@@ -1,5 +1,3 @@
-"""Attribute IO mapping FastCS attributes onto libximc struct fields."""
-
 from __future__ import annotations
 
 from dataclasses import KW_ONLY, dataclass
@@ -12,13 +10,7 @@ from .device import XimcDevice
 
 @dataclass
 class XimcSettingsIORef(AttributeIORef):
-    """Points an ``Attribute`` at one field of one libximc struct.
-
-    ``group`` is the libximc struct name without its ``_settings_t`` suffix, so
-    ``("move", "Speed")`` reads ``get_move_settings().Speed`` and writes it back
-    through ``set_move_settings``. The read-only groups ``position``, ``status``
-    and ``device_information`` are read with ``get_<group>()`` instead.
-    """
+    """One field of a libximc struct, e.g. ``("move", "Speed")``."""
 
     group: str
     field: str
@@ -28,11 +20,6 @@ class XimcSettingsIORef(AttributeIORef):
     bit: int | None = None
     """Mask selecting a single flag of a bitmask field, read and written alone."""
     update_period: float | None = 0.2
-
-    def __post_init__(self) -> None:
-        # Accept libximc Flag members as well as plain ints
-        if self.bit is not None:
-            self.bit = int(self.bit)
 
 
 class XimcSettingsIO(AttributeIO[Any, XimcSettingsIORef]):
@@ -59,11 +46,7 @@ class XimcSettingsIO(AttributeIO[Any, XimcSettingsIORef]):
 
 
 def _to_datatype(raw: Any, scale: float, attr: AttrR[Any, XimcSettingsIORef]) -> Any:
-    """Coerce a raw libximc value to the attribute's datatype.
-
-    libximc returns ``IntEnum`` and ``Flag`` members for bitmask and mode
-    fields; ``int()``/``float()`` reduce those to their numeric value.
-    """
+    """Coerce a raw libximc value, which may be an enum member, to the datatype."""
     dtype = attr.datatype.dtype
     if dtype is bool:
         return bool(raw)

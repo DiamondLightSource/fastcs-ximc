@@ -1,10 +1,7 @@
-"""FastCS controller for a single libximc motion controller."""
-
 from __future__ import annotations
 
-import enum
 import logging
-from typing import Any
+from typing import Any, SupportsInt
 
 import libximc.highlevel as ximc
 from fastcs import ONCE
@@ -33,22 +30,7 @@ class MotionInhibitedError(RuntimeError):
 
 
 class XimcController(Controller):
-    """A single motion controller driven through the libximc library.
-
-    Exposes the position, motion, status and engine settings that every libximc
-    device supports. The device is addressed by a full libximc URI, so real
-    (``xi-com://``, ``xi-net://``, ``xi-udp://``) and virtual (``xi-emu://``)
-    devices are driven identically.
-
-    libximc calls the two directions "left" and "right"; since a stage may be
-    vertical or rotary, they are named after the position count instead -
-    forward and high for increasing steps, reverse and low for decreasing.
-
-    Attributes with an ``io_ref`` are backed by a libximc struct field. The rest
-    are soft attributes held only in software - the ``Units`` group, the marked
-    position, the tweak step and the motion inhibit - and are writable so that a
-    control system autosave layer can restore them across a restart.
-    """
+    """One libximc axis; directions are named forward/reverse after the step count."""
 
     def __init__(self, options: XimcOptions) -> None:
         self._options = options
@@ -786,24 +768,13 @@ def _ref(
     update_period: float | None,
     *,
     scale: float = 1.0,
-    bit: int | enum.Flag | None = None,
+    bit: SupportsInt | None = None,
 ) -> XimcSettingsIORef:
     """Shorthand for a `XimcSettingsIORef`, accepting libximc flag members."""
     return XimcSettingsIORef(
         group,
         field,
         scale=scale,
-        bit=_bit_mask(bit),
+        bit=None if bit is None else int(bit),
         update_period=update_period,
     )
-
-
-def _bit_mask(bit: int | enum.Flag | None) -> int | None:
-    """Reduce a libximc flag member to its raw mask.
-
-    libximc's flags derive from a ``StrictIntFlag`` that is not an ``int``
-    subclass, so the underlying value has to be taken explicitly.
-    """
-    if bit is None or isinstance(bit, int):
-        return bit
-    return int(bit.value)
